@@ -251,8 +251,8 @@ class Reading:
         >>> r.add_examples('成る')
         >>> r.reading
         'な.る'
-        >>> r.examples
-        ['成る']
+        >>> r.examples[0].example
+        '成る'
 
         Na-adjectives are listed with an extra だ, which we process:
 
@@ -261,16 +261,24 @@ class Reading:
         >>> r.add_examples('爽やかだ')
         >>> r.reading
         'さわ.やか'
-        >>> r.examples
-        ['爽やかだ']
+        >>> r.examples[0].example
+        '爽やかだ'
 
         >>> k = Kanji('嫌')
         >>> r = Reading(k, reading='いや')
         >>> r.add_examples('嫌だ')
         >>> r.reading
         'いや'
-        >>> r.examples
-        ['嫌だ']
+        >>> r.examples[0].example
+        '嫌だ'
+
+        This function won't generate spurious okurigana from partial matches:
+        >>> k = Kanji('恥')
+        >>> r = Reading(k, reading='はじる')
+        >>> r.add_examples('恥じる')
+        >>> r.add_examples('恥じ入る')
+        >>> r.reading
+        'は.じる'
 
         The single non–na-adjective trailed だ is handled just fine:
         >>> k = Kanji('甚')
@@ -278,8 +286,8 @@ class Reading:
         >>> r.add_examples('甚だ')
         >>> r.reading
         'はなは.だ'
-        >>> r.examples
-        ['甚だ']
+        >>> r.examples[0].example
+        '甚だ'
 
         We're not confused by multiple or weird examples:
         >>> k = Kanji('慌')
@@ -287,20 +295,27 @@ class Reading:
         >>> r.add_examples('慌ただしい')
         >>> r.add_examples('慌ただしさ')
         >>> r.add_examples('慌だだしげだ')
+        >>> len(r.examples)
+        3
         >>> r.reading
         'あわ.ただしい'
 
         """
-        self.examples += examples_str.split('，')
+        examples = examples_str.split('，')
+        # creating Example objects also clean up part-of-speech markers
+        examples = [Example(e) for e in examples]
 
         if self.kind == 'Kun':
             clean_reading = self.reading.replace('.', '')
-
-            for example in self.examples:
+            for example_obj in examples:
+                example = example_obj.example
+                if not re.match(r"%s\p{Hiragana}+$" % self.kanji.kanji, example):
+                    # Ignore non-okurigana examples
+                    continue
                 for suffix in all_suffixes(clean_reading):
                     # accept a だ because they add it to examples, in the case
                     # of na-adjectives.
-                    match = re.search('^(.*)' + suffix + 'だ?$', example)
+                    match = re.search('^(.*)(%sだ?)$' % suffix, example)
                     if match:
                         prefix = clean_reading[:-len(suffix)]
                         new_reading = prefix + '.' + suffix
@@ -311,8 +326,18 @@ class Reading:
                         else:
                             # We already had a dotted reading calculated;
                             # let's ensure it's the same.
-                            assert(self.reading == new_reading)
-                        return
+                            if not self.reading == new_reading:
+                                raise(ValueError("\n".join([
+                                    "Example generated different okurigana:",
+                                    "old: " + self.reading,
+                                    "new: " + new_reading,
+                                    "example: " + example,
+                                    "prefix: " + prefix,
+                                    "suffix: " + suffix,
+                                ])))
+                        break
+
+        self.examples += examples
 
 
     def romaji(self):
@@ -444,6 +469,18 @@ class Reading:
             s += (', examples: [%s]' % ','.join(self.examples))
         return(s)
 
+class Example:
+    def __init__(self, example):
+        if '〔副〕' in example:
+            example = example.replace('〔副〕', '')
+            self.pos = 'Adverb'
+        elif '〔接〕' in example:
+            example = example.replace('〔接〕', '')
+            self.pos = 'Conjunction'
+        elif re.match('^……', example):
+            example = example.replace('……', '')
+            self.pos = 'Suffix'
+        self.example = example
 
 # With this, one can test with: python3 model.py -v
 if __name__ == "__main__":
