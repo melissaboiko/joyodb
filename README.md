@@ -45,7 +45,7 @@ Completed:
 
 Yet to be done:
  - Examples:
-   - Handle POS markers like 〔副〕.
+   - Handle POS markers :〔副〕,〔接〕, '……',
  - Notes (参考)
    - Distinguish kanji-scoped notes from reading-scoped (almost done; need to
      handle jukujikun better).
