@@ -81,7 +81,7 @@ How to recreate the files
 
      pip3 install ostruct
      pip3 install regex # newer version of 're'
-     git clone # this repo
+     git clone https://github.com/leoboiko/joyodb.git
      cd joyodb
      make # (needs Internet)
      bin/convert_joyodb
