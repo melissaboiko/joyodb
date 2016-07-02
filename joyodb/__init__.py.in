@@ -1,0 +1,55 @@
+# This file sets up file paths, and reserves space on memory to store things.
+import os
+
+from ostruct import OpenStruct
+# Here we store the data that we read from the Joyo table.
+loaded_data = OpenStruct()
+
+# This comes straight from the Makefile.
+JOYOHYO_TXT = $JOYOHYO_TXT
+
+# "The parent dir of the directory of the full path of this file."
+basedir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+# Here we store data downloaded from the Internet, including the Joyo table
+# PDF.
+cachedir = basedir + '/cache'
+
+# Auxiliary data which comes bundled with this program.
+datadir = basedir + '/data'
+
+# Here we save the data converted to other formats.
+outputdir = basedir + '/output'
+
+for directory in cachedir, outputdir:
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+
+
+# Read the variants from datafile.
+#
+# Five Jōyō kanji have alternate "accepted character forms" 許容字体, marked
+# with brackets [] in the PDF.  These can be represented by Unicode variation
+# sequences[1].  Sadly, at the moment of this writing (2016), very few software
+# support such sequences.  At any rate, I've hand-picked Unicode variations
+# that look like the reference images, because this is "forward-compatible" –
+# these sequences can be useful in the future, when Unicode support gets more
+# widespread.
+#
+# [1] https://en.wikipedia.org/wiki/Variant_form_(Unicode)
+variants = {}
+with open(datadir + '/variants.tsv', 'rt') as f:
+    # Throw away the header.
+    f.readline()
+    for line in f:
+        # - Base: the basic Unicode codepoint for that character.
+        # - Default: A variation sequence that's graphically equivalent to the
+        #            main reference image in the Joyo table.
+        # - Accepted: A variation sequence that's graphically equivalent to the
+        #            'accepted variant' in the Joyo table.
+        #
+        # Contrary to what one would expect, often the 'accepted' variant is
+        # actually the one in current use, and the one that shows up for the
+        # base Unicode codepoint under most Japanese fonts.
+        base, default, accepted = line.split("\t")
+        variants[base] = (default, accepted)

@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+basedir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(basedir)
+
+import joyodb.convert
+joyodb.convert.convert()
+print("All converted fine!")
