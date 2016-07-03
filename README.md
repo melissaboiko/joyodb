@@ -47,6 +47,7 @@ Completed:
    - doctests for functions
    - old_kanji: against wikipedia, old dataset
    - readings: against kanjidic
+   - examples: against edict
 
 Yet to be done:
  - Decide how to mark 恐らく as special
@@ -72,7 +73,6 @@ Yet to be done:
      - One-off types of notes.
 
  - Tests
-   - examples: against edict
    - notes: write at least one test for each type of parsed data
 
  - Reference images for variant glyphs (許容字体)
