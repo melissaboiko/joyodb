@@ -304,8 +304,8 @@ class Reading:
         >>> k = Kanji('𠮟')
         >>> r = Reading(k, reading='シツ')
         >>> r.add_examples('𠮟責') # in goes U+20B9F
-        >>> r.examples[0].example
-        '叱' # out comes U+53F1
+        >>> r.examples[0].example # out comes U+53F1
+        '叱責'
 
         Also use the example to delimit trailing okurigana in kun-readings,
         where applicable.
