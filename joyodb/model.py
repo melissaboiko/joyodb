@@ -301,6 +301,10 @@ class Reading:
         'あわ.ただしい'
 
         """
+        if '（' in examples_str:
+            print("TODO: skipping complex example list: %s" % examples_str)
+            return
+
         examples = examples_str.split('，')
         # creating Example objects also clean up part-of-speech markers
         examples = [Example(e) for e in examples]
