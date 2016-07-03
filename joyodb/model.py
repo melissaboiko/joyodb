@@ -306,6 +306,7 @@ class Reading:
             return
 
         examples = examples_str.split('，')
+        examples = filter(None, examples)
         # creating Example objects also clean up part-of-speech markers
         examples = [Example(e) for e in examples]
 
