@@ -35,8 +35,9 @@ Completed:
    - Handle 亀/龜 as Unicode.
  - Variant forms
    - Encode accepted variants (許容字体) as Unicode variation sequences.
-   - Handle problematic 叱 U+53F1 vs. 𠮟 U+20B9F situation (MEXT wants the
-     latter, but everyone uses the former).
+   - Convert little-used codepoints to popular use alternatives (通用字体:
+     塡 剝 頰 → 填 剥 頬).
+   - Convert 叱 U+53F1 into common alternate (異体字) 𠮟 U+20B9F.
  - Notes (参考)
    - Save full note as text
      - Handle notes spanning multiple lines
@@ -44,6 +45,7 @@ Completed:
    - TSV
  - Tests
    - doctests for functions
+   - old_kanji: against wikipedia, old dataset
 
 Yet to be done:
  - Examples:
@@ -65,8 +67,7 @@ Yet to be done:
      - One-off types of notes.
 
  - Tests
-   - old_kanji: against old dataset
-   - readings: against Wikipedia table, kanjidic
+   - readings: against kanjidic
    - examples: against edict
    - notes: write at least one test for each type of parsed data
 

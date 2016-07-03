@@ -11,6 +11,7 @@ sys.path.append(basedir)
 os.chdir(basedir)
 
 wikipedia_file = basedir + '/cache/List_of_joyo_kanji.html'
+shin2kyuu_file = basedir + '/data/old_shin2kyuu.tsv'
 
 import joyodb
 import joyodb.model
@@ -94,6 +95,22 @@ class TestLoadedData(unittest.TestCase):
         for kanji in joyodb.loaded_data.kanjis:
             if kanji.old_kanji and len(kanji.old_kanji) == 1:
                 self.assertEqual(kanji.old_kanji, wikipedia_kanjis[kanji.kanji][0])
+
+    def test_against_old_shin2kyuu(self):
+        old_data = {}
+        with open(shin2kyuu_file, 'rt') as f:
+            for line in f:
+                shin, kyuu = line.strip().split("\t")
+                old_data[shin] = kyuu
+
+        kanjis_with_old = list(filter(lambda k: k.old_kanji, joyodb.loaded_data.kanjis))
+        self.assertEqual(len(kanjis_with_old), len(old_data))
+        for shin, kyuu in old_data.items():
+            if shin != '弁':
+                self.assertEqual(kyuu, self.kanjis[shin].old_kanji)
+        for kanji in kanjis_with_old:
+            if kanji.kanji != '弁':
+                self.assertEqual(kanji.old_kanji, old_data[kanji.kanji])
 
 
 def load_tests(loader, tests, ignore):
