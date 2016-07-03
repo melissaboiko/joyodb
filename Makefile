@@ -29,20 +29,24 @@ $(moduledir)/__init__.py: $(moduledir)/__init__.py.in
 
 wikipedia_url = 'https://en.wikipedia.org/w/index.php?title=List_of_jōyō_kanji&oldid=727326828'
 wikipedia_html = $(cachedir)/List_of_joyo_kanji.html
-kanjidic_url = 'http://ftp.monash.edu.au/pub/nihongo/kanjidic.gz'
-kanjidic = $(cachedir)/kanjidic.utf8
+kanjidic_url = ftp.monash.edu.au::nihongo/kanjidic_comb_utf8
+kanjidic = $(cachedir)/kanjidic_comb_utf8
+edict_url = ftp.monash.edu.au::nihongo/edict
+edict = $(cachedir)/edict_utf8
 
-test: $(wikipedia_html) $(kanjidic)
+test: $(wikipedia_html) $(kanjidic) $(edict)
 	python3 test/test.py
 
 $(wikipedia_html):
 	wget $(wikipedia_url) -O $(wikipedia_html)
 
 $(kanjidic):
-	wget $(kanjidic_url) -O $(cachedir)/kanjidic.gz
-	@gunzip $(cachedir)/kanjidic.gz
-	iconv -f euc-jp -t utf-8 $(cachedir)/kanjidic > $(kanjidic)
-	@rm -f $(cachedir)/kanjidic
+	rsync -z -q $(kanjidic_url) $(cachedir)/kanjidic_comb_utf8
+$(edict):
+	rsync -z -q $(edict_url) $(cachedir)/edict
+	iconv -f euc-jp -t utf-8 $(cachedir)/edict > $(edict)
+	@rm -f $(cachedir)/edict
+
 clean:
 	rm $(cachedir)/* $(moduledir)/__init__.py
 

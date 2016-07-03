@@ -12,7 +12,8 @@ os.chdir(basedir)
 
 wikipedia_file = basedir + '/cache/List_of_joyo_kanji.html'
 shin2kyuu_file = basedir + '/data/old_shin2kyuu.tsv'
-kanjidic_file = basedir + '/cache/kanjidic.utf8'
+kanjidic_file = basedir + '/cache/kanjidic_comb_utf8'
+edict_file = basedir + '/cache/edict_utf8'
 
 import joyodb
 import joyodb.model
@@ -160,6 +161,21 @@ class TestLoadedData(unittest.TestCase):
             for reading in kanji.readings:
                 if (kanji.kanji, reading.reading) not in KANJIDIC_MISSING_READINGS:
                     self.assertIn(reading.reading, kanjidic_data[kanji.kanji])
+
+    def test_against_edict(self):
+        edict_data = {}
+        with open(edict_file, 'rt') as f:
+            for line in f:
+                fields = line.split()
+                if fields[1][0] == '[':
+                    # it's a kanji entry
+                    expression = fields[0]
+                    # strip surrounding []
+                    reading = fields[1][1:-2]
+
+                    if expression not in edict_data.keys():
+                        edict_data[expression] = list()
+                    edict_data[expression].append(reading)
 
 
 def load_tests(loader, tests, ignore):
