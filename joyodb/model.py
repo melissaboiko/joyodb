@@ -471,16 +471,25 @@ class Reading:
 
 class Example:
     def __init__(self, example):
+        """Model for each item in a list of examples (例 column).
+
+         - self.example: The cleaned text string.
+         - self.pos: If a part-of-speech marker is given, this is set to one of
+          'Adverb', 'Conjunction' or 'Suffix'.
+      """
+
         if '〔副〕' in example:
-            example = example.replace('〔副〕', '')
+            self.example = example.replace('〔副〕', '')
             self.pos = 'Adverb'
         elif '〔接〕' in example:
-            example = example.replace('〔接〕', '')
+            self.example = example.replace('〔接〕', '')
             self.pos = 'Conjunction'
         elif re.match('^……', example):
-            example = example.replace('……', '')
+            self.example = example.replace('……', '')
             self.pos = 'Suffix'
-        self.example = example
+        else:
+            self.example = example
+            self.pos = None
 
 # With this, one can test with: python3 model.py -v
 if __name__ == "__main__":
