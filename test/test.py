@@ -2,8 +2,14 @@ import unittest
 import doctest
 import os
 import sys
+import logging
+from collections import defaultdict
 
 from bs4 import BeautifulSoup
+from lxml import etree
+import romkan
+import MeCab
+mecab_tagger = MeCab.Tagger('-Ounidic')
 
 # "The parent dir of the directory of the full path of this file."
 basedir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -13,7 +19,8 @@ os.chdir(basedir)
 wikipedia_file = basedir + '/cache/List_of_joyo_kanji.html'
 shin2kyuu_file = basedir + '/data/old_shin2kyuu.tsv'
 kanjidic_file = basedir + '/cache/kanjidic_comb_utf8'
-edict_file = basedir + '/cache/edict_utf8'
+jmdict_file = basedir + '/cache/JMdict'
+jmdict_missing_examples_file = basedir + '/data/examples_not_in_jmdict.tsv'
 
 import joyodb
 import joyodb.model
@@ -58,10 +65,54 @@ KANJIDIC_MISSING_READINGS = [
     ('替', 'かえ.る'), # example: 両替
     ('漬', 'つけ.る'), # example: 漬物
 
-    # this one was added by ours; on the table it's listed as an example of
+    # this one was added by me; on the table it's listed as an example of
     # 恐れる
     ('恐', 'おそ.らく'), # example: 恐らく
 ]
+
+JMDICT_MISSING_EXAMPLES = []
+with open(jmdict_missing_examples_file, 'rt') as f:
+    f.readline() # discard header
+    for line in f:
+        kanji, reading, example, furigana = line.strip().split("\t")
+        JMDICT_MISSING_EXAMPLES.append((kanji, reading, example))
+
+jmdict_index = defaultdict(list)
+class JMdictEntry():
+
+    def __init__(self, entry):
+        self.kanji_expressions = []
+        for k_ele in entry.iter('k_ele'):
+            keb = k_ele.find('keb')
+            self.kanji_expressions.append(keb.text)
+            jmdict_index[keb.text].append(self)
+
+        self.readings = []
+        for r_ele in entry.iter('r_ele'):
+            reb = r_ele.find('reb')
+            self.readings.append(reb.text)
+
+        self.parts_of_speech = []
+        for pos in entry.iter('pos'):
+            for entity in pos.iter(tag=etree.Entity):
+                self.parts_of_speech.append(str(entity))
+
+def jmdict_is_kanji_entry(entry):
+    if entry.find('k_ele') is not None:
+        return True
+
+def lemmatize_with_mecab(expression, kanji):
+    '''Find the first word containing kanji; return (lemma, reading).'''
+    nodes = mecab_tagger.parseToNode(expression)
+    while nodes:
+        features = nodes.feature.split(',')
+        if kanji in features[10]:
+            lemma = features[10]
+            reading = romkan.to_hiragana(romkan.to_roma(features[6]))
+            return((lemma, reading))
+        nodes = nodes.next
+    raise(ValueError("Mecab failed: %s, %s" % (expression, kanji)))
+
 
 class TestLoadedData(unittest.TestCase):
 
@@ -163,19 +214,43 @@ class TestLoadedData(unittest.TestCase):
                     self.assertIn(reading.reading, kanjidic_data[kanji.kanji])
 
     def test_against_edict(self):
-        edict_data = {}
-        with open(edict_file, 'rt') as f:
-            for line in f:
-                fields = line.split()
-                if fields[1][0] == '[':
-                    # it's a kanji entry
-                    expression = fields[0]
-                    # strip surrounding []
-                    reading = fields[1][1:-2]
+        # list of EdictEntry objects
+        jmdict_data = []
 
-                    if expression not in edict_data.keys():
-                        edict_data[expression] = list()
-                    edict_data[expression].append(reading)
+        parser = etree.XMLParser(resolve_entities=False)
+        tree = etree.parse(jmdict_file, parser)
+        for entry in  tree.getroot().iter('entry'):
+            if jmdict_is_kanji_entry(entry):
+                jmdict_entry = JMdictEntry(entry)
+                jmdict_data.append(jmdict_entry)
+
+        for k in joyodb.loaded_data.kanjis:
+            for r in k.readings:
+                for e in r.examples:
+
+                    jmdict_entries = None
+
+                    if e.example in jmdict_index.keys():
+                        jmdict_entries = jmdict_index[e.example]
+                    elif (k.kanji, r.reading, e.example) in JMDICT_MISSING_EXAMPLES:
+                        continue
+                    else:
+                        lemma, lemma_reading = lemmatize_with_mecab(e.example, k.kanji)
+                        if lemma in jmdict_index.keys():
+                            jmdict_entries = jmdict_index[lemma]
+                            jmdict_entries = [je for je in jmdict_entries
+                                              if lemma_reading in je.readings]
+                            if not jmdict_entries:
+                                raise(RuntimeError(
+                                    "Could not find example: %s (lemma: %s,%s)" %
+                                    (e.example, lemma, lemma_reading)))
+                            else:
+                                logging.warning("Could only find lemmatized example: %s, %s" %
+                                                (e.example, lemma))
+
+                    if not jmdict_entries:
+                        raise(RuntimeError("Could not find example: %s"
+                              % e.example))
 
 
 def load_tests(loader, tests, ignore):

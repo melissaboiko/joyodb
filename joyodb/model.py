@@ -509,6 +509,30 @@ class Reading:
         else:
             return(hepburn.title())
 
+    def to_hiragana(self):
+        """Return the reading as hiragana, even if it's On.
+
+        >>> k = Kanji('柔')
+        >>> r = Reading(k, 'ニュウ')
+        >>> r.to_hiragana()
+        'にゅう'
+
+
+        If it's not On, it's imdepotent.
+        >>> k = Kanji('最')
+        >>> r = Reading(k, 'もっとも')
+        >>> r.add_examples('最も')
+        >>> r.reading
+        'もっと.も'
+        >>> r.to_hiragana()
+        'もっと.も'
+
+        """
+
+        if self.kind == 'On':
+            return(romkan.to_hiragana(romkan.to_roma(self.reading)))
+        else:
+            return(self.reading)
 
     def append_to_notes(self, string):
         """Intelligently add data from the "notes" column.

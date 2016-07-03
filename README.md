@@ -53,6 +53,7 @@ Yet to be done:
 
  - Examples:
    - Handle examples with （） like those for 羽
+   - Handle examples with 「」
 
  - Notes (参考)
    - Distinguish kanji-scoped notes from reading-scoped (almost done; need to

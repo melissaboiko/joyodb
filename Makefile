@@ -31,21 +31,19 @@ wikipedia_url = 'https://en.wikipedia.org/w/index.php?title=List_of_jōyō_kanji
 wikipedia_html = $(cachedir)/List_of_joyo_kanji.html
 kanjidic_url = ftp.monash.edu.au::nihongo/kanjidic_comb_utf8
 kanjidic = $(cachedir)/kanjidic_comb_utf8
-edict_url = ftp.monash.edu.au::nihongo/edict
-edict = $(cachedir)/edict_utf8
+jmdict_url = ftp.monash.edu.au::nihongo/JMdict
+jmdict = $(cachedir)/JMdict
 
-test: $(wikipedia_html) $(kanjidic) $(edict)
+test: $(wikipedia_html) $(kanjidic) $(jmdict)
 	python3 test/test.py
 
 $(wikipedia_html):
 	wget $(wikipedia_url) -O $(wikipedia_html)
 
 $(kanjidic):
-	rsync -z -q $(kanjidic_url) $(cachedir)/kanjidic_comb_utf8
-$(edict):
-	rsync -z -q $(edict_url) $(cachedir)/edict
-	iconv -f euc-jp -t utf-8 $(cachedir)/edict > $(edict)
-	@rm -f $(cachedir)/edict
+	rsync -z -q $(kanjidic_url) $(kanjidic)
+$(jmdict):
+	rsync -z -q $(jmdict_url) $(jmdict)
 
 clean:
 	rm $(cachedir)/* $(moduledir)/__init__.py
