@@ -28,7 +28,7 @@ Completed:
    - Distinguish special readings (marked in the table as indented/1字下げ).
  - Example words
    - Use examples to delimit okurigana in kun-readings
-     - Including inflected examples, or "double okurigana" (like 成り立ち)
+     - Including inflected examples, and "double okurigana" (like 成り立ち)
    - Handle POS markers :〔副〕,〔接〕, '……',
  - Old kanji
    - Handle 弁:[辨, 瓣, 辯].
@@ -46,10 +46,14 @@ Completed:
  - Tests
    - doctests for functions
    - old_kanji: against wikipedia, old dataset
+   - readings: against kanjidic
 
 Yet to be done:
+ - Decide how to mark 恐らく as special
+
  - Examples:
    - Handle examples with （） like those for 羽
+
  - Notes (参考)
    - Distinguish kanji-scoped notes from reading-scoped (almost done; need to
      handle jukujikun better).
@@ -67,11 +71,11 @@ Yet to be done:
      - One-off types of notes.
 
  - Tests
-   - readings: against kanjidic
    - examples: against edict
    - notes: write at least one test for each type of parsed data
 
  - Reference images for variant glyphs (許容字体)
+
  - Parse appendix
 
  - Output types:
