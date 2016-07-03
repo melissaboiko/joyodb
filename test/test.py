@@ -12,6 +12,7 @@ os.chdir(basedir)
 
 wikipedia_file = basedir + '/cache/List_of_joyo_kanji.html'
 shin2kyuu_file = basedir + '/data/old_shin2kyuu.tsv'
+kanjidic_file = basedir + '/cache/kanjidic.utf8'
 
 import joyodb
 import joyodb.model
@@ -31,15 +32,45 @@ WIKIPEDIA_ONLY_OLDKANJI = [
     '悅',
 ]
 
+KANJIDIC_MISSING_READINGS = [
+    ('惧', 'グ'), # example: 危惧
+    ('塞', 'ふさ.がる'), # example: 塞がる
+    ('守', 'も.り'), # example: お守り
+    ('振', 'ふ.れる'), # example: 振れる
+    ('羨', 'うらや.ましい'), # example: 羨ましい
+    ('曽', 'ゾ'), # example: 未曽有
+    ('速', 'はや.まる'), # example: 速まる
+    ('中', 'ジュウ'), # example: ○○中
+    ('貪', 'ドン'), # example: 貪欲
+    ('丼', 'どん'), # example: 牛丼
+    ('務', 'つと.まる'), # example: 務まる
+    ('踊', 'おど.り'), # example: 踊り # clean redundant inflections like this?
+    ('謡', 'うたい'), # example: 謡, 素謡
+    ('絡', 'から.める'), # example: 絡める
+    ('籠', 'こ.もる'), # example: 籠もる
+    ('宛', 'あて.る'), # example: 宛先
+    ('詣', 'もうで.る'), # example: 初詣
+    ('建', 'たて.る'), # example: 建物
+    ('受', 'うけ.る'), # example: 受付
+    ('植', 'うえ.る'), # example: 植木
+    ('請', 'うけ.る'), # example: 請負
+    ('替', 'かえ.る'), # example: 両替
+    ('漬', 'つけ.る'), # example: 漬物
+
+    # this one was added by ours; on the table it's listed as an example of
+    # 恐れる
+    ('恐', 'おそ.らく'), # example: 恐らく
+]
+
 class TestLoadedData(unittest.TestCase):
 
-    def setUp(self):
+    def setUpClass():
         joyodb.convert.parse()
-        self.kanjis = {}
+        TestLoadedData.kanjis = {}
 
         # convenience mapping by string
         for k in joyodb.loaded_data.kanjis:
-            self.kanjis[k.kanji] = k
+            TestLoadedData.kanjis[k.kanji] = k
 
     def test_okurigana_delimit(self):
         """Simple test to look for suspicious non-delimited readings."""
@@ -76,20 +107,20 @@ class TestLoadedData(unittest.TestCase):
 
             wikipedia_kanjis[new] = (old, readings)
 
-        self.assertEqual(len(self.kanjis.keys()), len(wikipedia_kanjis.keys()))
+        self.assertEqual(len(TestLoadedData.kanjis.keys()), len(wikipedia_kanjis.keys()))
 
         for w_kanji in wikipedia_kanjis.keys():
             if w_kanji in joyodb.popular_alternatives.keys():
-                self.assertEqual(self.kanjis[joyodb.popular_alternatives[w_kanji]].default_variant,
+                self.assertEqual(TestLoadedData.kanjis[joyodb.popular_alternatives[w_kanji]].default_variant,
                                  w_kanji)
             else:
-                self.assertEqual(self.kanjis[w_kanji].kanji, w_kanji)
+                self.assertEqual(TestLoadedData.kanjis[w_kanji].kanji, w_kanji)
 
             w_old, readings = wikipedia_kanjis[w_kanji]
             if (w_old not in WIKIPEDIA_ONLY_OLDKANJI
                 and w_kanji != '弁'): # confirmed by hand
 
-                loaded_kanji = self.kanjis[joyodb.popularize(w_kanji)]
+                loaded_kanji = TestLoadedData.kanjis[joyodb.popularize(w_kanji)]
                 self.assertEqual(loaded_kanji.old_kanji, w_old)
 
         for kanji in joyodb.loaded_data.kanjis:
@@ -107,10 +138,28 @@ class TestLoadedData(unittest.TestCase):
         self.assertEqual(len(kanjis_with_old), len(old_data))
         for shin, kyuu in old_data.items():
             if shin != '弁':
-                self.assertEqual(kyuu, self.kanjis[shin].old_kanji)
+                self.assertEqual(kyuu, TestLoadedData.kanjis[shin].old_kanji)
         for kanji in kanjis_with_old:
             if kanji.kanji != '弁':
                 self.assertEqual(kanji.old_kanji, old_data[kanji.kanji])
+
+    def test_against_kanjidic(self):
+        kanjidic_data = {}
+        with open(kanjidic_file, 'rt') as f:
+            for line in f:
+                kanji, *fields = line.strip().split()
+
+                if kanji in TestLoadedData.kanjis.keys():
+                    # kanjidic marks bound affixes with '-', but we don't
+                    fields = [re.sub('-$', '', f) for f in fields]
+                    fields = [re.sub('^-', '', f) for f in fields]
+
+                    kanjidic_data[kanji] = fields
+
+        for kanji in joyodb.loaded_data.kanjis:
+            for reading in kanji.readings:
+                if (kanji.kanji, reading.reading) not in KANJIDIC_MISSING_READINGS:
+                    self.assertIn(reading.reading, kanjidic_data[kanji.kanji])
 
 
 def load_tests(loader, tests, ignore):
