@@ -1,8 +1,7 @@
 Introduction
 ============
 
-Warning: This software is currently **alpha** and **untested**.  Don't use the
-data blindly.
+Warning: This software is currently **alpha**.  Don't use the data blindly.
 
 Kanji usage in Japan is regulated by the Jōyō Kanji table.  The latest, 2010
 edition of the table is provided by the Ministry of Education in PDF format:
