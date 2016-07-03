@@ -105,7 +105,7 @@ class Kanji:
     def append_to_kanji_notes(self, string):
         """Intelligently add a kanji-scoped note.
 
-        - .+[府県]: prefecture-name special reading.
+        - .+[府県]: prefecture-name uncommon reading.
 
 
         - ［漢］＝許容字体，\n *[(付).+]: reference for variant forms, encoded as
@@ -295,9 +295,9 @@ class Reading:
         - kanji: The kanji that this is a reading of (pointer to parent Kanji
                  object).
         - reading: The reading in kana (hiragana or katakana).  Kun-readings
-                   will have okurigana delimited by a dot '.'.  Special readings,
+                   will have okurigana delimited by a dot '.'.  Uncommon readings,
                    indented on table, will lose the indentation and be marked with
-                   self.special=True.
+                   self.uncommon=True.
         - kind: one of On, Kun, TODO: jukujikun/exceptional readings.  If not
                 passed, will autodetect as On for katakana and Kun otherwise.
 
@@ -313,16 +313,16 @@ class Reading:
         >>> r3 = Reading(k, reading='　ジョウ') # wide space == "\u3000"
         >>> r3.kind
         'On'
-        >>> r3.special # indent = special
+        >>> r3.uncommon # indent = uncommon
         True
         >>> r3.reading # this field loses the indent spacing
         'ジョウ'
 
-        >>> r1.special == r2.special == False # no indent = not special
+        >>> r1.uncommon == r2.uncommon == False # no indent = not uncommon
         True
 
         - examples: Example words from the Jōyō table; a list of strings.
-        - special: If true, this is a rarely-used reading, or a prefecture-name
+        - uncommon: If true, this is a rarely-used reading, or a prefecture-name
                    reading.  This is equivalento to readings indented
                    ("1字下げ) in the PDF table.
         - notes: The "notes" (参考) column, when it's reading-scoped.
@@ -332,10 +332,10 @@ class Reading:
         self.kanji = kanji
         if reading[0] == "\u3000":
             self.reading = reading[1:]
-            self.special = True
+            self.uncommon = True
         else:
             self.reading = reading
-            self.special = False
+            self.uncommon = False
 
         self.examples = list()
 
@@ -495,7 +495,7 @@ class Reading:
         >>> r1.romaji()
         'KEN'
         >>> r2 = Reading(k, reading='　ゲン')
-        >>> r2.romaji() # self.special isn't marked in romaji
+        >>> r2.romaji() # self.uncommon isn't marked in romaji
         'GEN'
         >>> r3 = Reading(k, reading='いや')
         >>> r3.romaji()
@@ -607,7 +607,7 @@ class Reading:
     # pretty representation; useful when debugging
     def __str__(self):
         s = self.romaji()
-        if self.special:
+        if self.uncommon:
             s += ' (特)'
         if self.examples:
             s += (', examples: [%s]' % ','.join([str(e) for e in self.examples]))

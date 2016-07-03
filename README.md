@@ -25,7 +25,7 @@ Completed:
 
  - On- and kun-readings
    - Romaji converter.
-   - Distinguish special readings (marked in the table as indented/1字下げ).
+   - Distinguish uncommon readings (marked in the table as indented/1字下げ).
  - Example words
    - Use examples to delimit okurigana in kun-readings
      - Including inflected examples, and "double okurigana" (like 成り立ち)

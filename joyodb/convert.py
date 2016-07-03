@@ -496,14 +496,14 @@ def parse_appendix_table():
 
 def convert_to_tsv():
     with open(outputdir + '/readings.tsv', 'wt') as f:
-        f.write("Kanji\tReading\tRomaji\tType\tSpecial?\n")
+        f.write("Kanji\tReading\tRomaji\tType\tUncommon?\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
                 f.write(k.kanji + "\t")
                 f.write(r.reading + "\t")
                 f.write(r.romaji() + "\t")
                 f.write(r.kind + "\t")
-                if r.special:
+                if r.uncommon:
                     f.write('Y')
                 f.write("\n")
 
@@ -516,13 +516,13 @@ def convert_to_tsv():
                 f.write("%s\t%s\n" %( k.kanji, k.old_kanji))
 
     with open(outputdir + '/examples.tsv', 'wt') as f:
-        f.write("Kanji\tReading\tSpecial reading?\tExample\tPOS of example\n")
+        f.write("Kanji\tReading\tUncommon reading?\tExample\tPOS of example\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
-                if r.special:
-                    special = 'Y'
+                if r.uncommon:
+                    uncommon = 'Y'
                 else:
-                    special = ''
+                    uncommon = ''
 
                 for e in r.examples:
                     if e.pos:
@@ -530,7 +530,7 @@ def convert_to_tsv():
                     else:
                         pos = ''
 
-                    f.write("%s\t%s\t%s\t%s\t%s\n" % (k.kanji, r.reading, special, e.example, pos))
+                    f.write("%s\t%s\t%s\t%s\t%s\n" % (k.kanji, r.reading, uncommon, e.example, pos))
 
     with open(outputdir + '/kanji_notes.tsv', 'wt') as f:
         f.write("Kanji\tNote\n")
@@ -539,19 +539,19 @@ def convert_to_tsv():
                 f.write("%s\t%s\n" % (k.kanji, k.notes))
 
     with open(outputdir + '/reading_notes.tsv', 'wt') as f:
-        f.write("Kanji\tReading\tSpecial?\tNote\n")
+        f.write("Kanji\tReading\tUncommon?\tNote\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
-                if r.special:
-                    special = 'Y'
+                if r.uncommon:
+                    uncommon = 'Y'
                 else:
-                    special = ''
+                    uncommon = ''
 
                 if r.notes:
                     f.write("%s\t%s\t%s\t%s\n" %
                             (k.kanji,
                             r.reading,
-                            special,
+                            uncommon,
                             r.notes))
 
 def convert_to_sql():
