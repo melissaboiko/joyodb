@@ -27,7 +27,15 @@ $(moduledir)/__init__.py: $(moduledir)/__init__.py.in
 	    $(moduledir)/__init__.py.in \
 	    >> $(moduledir)/__init__.py
 
+wikipedia_url = https://en.wikipedia.org/wiki/List_of_jōyō_kanji
+wikipedia_html = $(cachedir)/List_of_joyo_kanji.html
+
+test: $(wikipedia_html)
+	python3 test/test.py
+$(wikipedia_html):
+	wget $(wikipedia_url) -O $(wikipedia_html)
+
 clean:
 	rm $(cachedir)/* $(moduledir)/__init__.py
 
-.PHONY: all clean
+.PHONY: all clean test
