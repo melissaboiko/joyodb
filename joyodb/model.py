@@ -60,6 +60,7 @@ class Kanji:
 
         self.readings.append(Reading(self, reading, kind))
 
+
     def add_examples(self, examples):
         """Call Reading.add_examples for current reading."""
 
@@ -146,14 +147,14 @@ def all_suffixes(string):
     """Return a list of all possible suffixes, in decreasing order.
 
     >>> all_suffixes('abcde')
-    ['bcde', 'cde', 'de', 'e']
+    ['abcde', 'bcde', 'cde', 'de', 'e']
 
     >>> all_suffixes('a')
-    []
+    ['a']
     """
 
     suffixes = []
-    for suffix_length in range(len(string)-1, 0, -1):
+    for suffix_length in range(len(string), 0, -1):
         suffixes.append(string[-suffix_length:])
     return(suffixes)
 
@@ -161,16 +162,51 @@ def all_suffixes(string):
 #
 # Luckly, no actual example uses a te-form or ta-form, so we don't need to
 # handle them.
-INFLECTION = {
+GODAN_INFLECTION = {
     'う': '[わえいおう]',
     'く': '[かけきこく]',
+    'ぐ': '[がげぎごぐ]',
     'す': '[させしそす]',
+    'ず': '[ざぜじぞず]',
     'つ': '[たてちとつ]',
+    'づ': '[だでぢどづ]',
     'ぬ': '[なねにのぬ]',
     'ふ': '[はへひほふ]',
+    'ぶ': '[ばべびぼぶ]',
+    'ぷ': '[ぱぺぴぽぷ]',
     'む': '[まめみもむ]',
     'る': '[られりろる]',
 }
+
+ICHIDAN_BASE_ENDING = '[えけげせぜてでねへべぺめれいきぎしじちぢにひびぴみり]'
+ICHIDAN_EXCEPTIONS = [
+    '昼',
+    '汁',
+]
+
+def is_ichidan_verb(kanji, canonical_reading):
+    """
+
+    >>> is_ichidan_verb('食', 'たべる')
+    True
+
+    >>> is_ichidan_verb('飲', 'のむ')
+    False
+
+    >>> is_ichidan_verb('干', 'ひる')
+    True
+
+    >>> is_ichidan_verb('昼', 'ひる')
+    False
+    """
+
+    if kanji in ICHIDAN_EXCEPTIONS:
+        return False
+    elif re.search(ICHIDAN_BASE_ENDING + 'る$', canonical_reading):
+        return True
+    else:
+        return False
+
 
 def delimit_okurigana(kanji, canonical_reading, example):
     """Find where to delimit okurigana, based on the example.
@@ -182,6 +218,12 @@ def delimit_okurigana(kanji, canonical_reading, example):
     >>> delimit_okurigana('頼', 'たよる', '頼り')
     'たよ.る'
 
+    >>> delimit_okurigana('初', 'そめる', '初める')
+    'そ.める'
+
+    >>> delimit_okurigana('干', 'ひる', '干物')
+    'ひ.る'
+
     And intra-word okurigana:
     >>> delimit_okurigana('八', 'やつ', '八つ当たり')
     'や.つ'
@@ -189,6 +231,13 @@ def delimit_okurigana(kanji, canonical_reading, example):
     And the two combined:
     >>> delimit_okurigana('揺', 'ゆる', '揺り返し')
     'ゆ.る'
+
+    >>> delimit_okurigana('初', 'そめる', '出初め式')
+    'そ.める'
+
+    >>> delimit_okurigana('干', 'ひる', '潮干狩り')
+    'ひ.る'
+
 
     It ignores a trailing だ in the example, for na-adjectives:
     >>> delimit_okurigana('静', 'しずか', '静かだ')
@@ -201,19 +250,43 @@ def delimit_okurigana(kanji, canonical_reading, example):
     It does nothing if the example isn't okurigana:
     >>> delimit_okurigana('本', 'ほん', '本')
     'ほん'
+
+    >>> delimit_okurigana('唇', 'くちびる', '唇')
+    'くちびる'
+
+    This is tricker, because it looks like an ichidan verb; it's
+    indistinguishable from 干=ひ.る except by explicit listing.
+
+    >>> delimit_okurigana('昼', 'ひる', '真昼')
+    'ひる'
+
     """
 
-    for suffix in all_suffixes(canonical_reading):
-        ok_regex = kanji + suffix
-        last = ok_regex[-1]
-        if last in INFLECTION.keys():
-            ok_regex = re.sub('.$', INFLECTION[last], ok_regex)
-        ok_regex += 'だ?'
+    if example == kanji:
+        return(canonical_reading)
 
+    for suffix in all_suffixes(canonical_reading):
+        prefix = canonical_reading[0:-len(suffix)]
+        ok_regex = kanji + suffix
         match = re.search(ok_regex, example)
         if match:
-            prefix = canonical_reading[0:-len(suffix)]
             return(prefix + '.' + suffix)
+
+        if is_ichidan_verb(kanji, canonical_reading):
+            ok_regex = ok_regex[:-1] # lose the る
+            match = re.search(ok_regex, example)
+            if match:
+                return(prefix + '.' + suffix)
+
+        last = ok_regex[-1]
+        if last in GODAN_INFLECTION.keys():
+            ok_regex = re.sub('.$', GODAN_INFLECTION[last], ok_regex)
+            match = re.search(ok_regex, example)
+            if match:
+                return(prefix + '.' + suffix)
+
+        ok_regex += 'だ'
+
     return(canonical_reading)
 
 class Reading:
@@ -339,6 +412,13 @@ class Reading:
         >>> r.reading
         'は.じる'
 
+        >>> k = Kanji('汁')
+        >>> r = Reading(k, reading='しる')
+        >>> r.add_examples('汁')
+        >>> r.add_examples('汁粉')
+        >>> r.reading
+        'しる'
+
         The single non–na-adjective trailed だ is handled just fine:
         >>> k = Kanji('甚')
         >>> r = Reading(k, reading='はなはだ')
@@ -366,12 +446,16 @@ class Reading:
 
         examples_str = popularize(examples_str)
         examples = examples_str.split('，')
-        examples = filter(None, examples)
+        examples = list(filter(None, examples))
+
+        blah=False
         # creating Example objects also clean up part-of-speech markers
         examples = [Example(e) for e in examples]
+        self.examples += examples
 
         if self.kind == 'Kun':
             clean_reading = self.reading.replace('.', '')
+
             for example_obj in examples:
                 example = example_obj.example
                 new_reading = delimit_okurigana(self.kanji.kanji, clean_reading, example)
@@ -382,17 +466,22 @@ class Reading:
                         self.reading = new_reading
                     else:
                         # We already had a dotted reading calculated;
-                        # let's ensure it's the same.
+                        # let's check whether it's the same.
                         if not self.reading == new_reading:
-                            raise(ValueError("\n".join([
-                                "Example generated different okurigana:",
-                                "old: " + self.reading,
-                                "new: " + new_reading,
-                                "example: " + example,
-                            ])))
-                    break
+                            # print("Adding multiple readings for: %s, %s" %
+                            #       (self.kanji.kanji, clean_reading))
 
-        self.examples += examples
+                            self.examples.remove(example_obj)
+
+                            # 恐らく mess the algorith because it's listed as
+                            # an example of おそれる – this only makes sense if
+                            # you assume Classical grammar.  We just handle it
+                            # as an exception, and add it as a separate reading.
+                            if example == '恐らく':
+                                clean_reading = 'おそらく'
+
+                            self.kanji.add_reading(clean_reading)
+                            self.kanji.add_examples(example)
 
 
     def romaji(self):
