@@ -298,6 +298,13 @@ class Reading:
     def add_examples(self, examples_str):
         """Add an example to the list.
 
+        Will convert the codepoint for 𠮟 (see documentation for class Kanji):
+        >>> k = Kanji('𠮟')
+        >>> r = Reading(k, reading='シツ')
+        >>> r.add_examples('𠮟責') # in goes U+20B9F
+        >>> r.examples[0].example
+        '叱' # out comes U+53F1
+
         Also use the example to delimit trailing okurigana in kun-readings,
         where applicable.
 
@@ -376,6 +383,8 @@ class Reading:
             print("TODO: skipping complex example list: %s" % examples_str)
             return
 
+        if '𠮟' in examples_str:
+            examples_str = examples_str.replace('𠮟', '叱')
         examples = examples_str.split('，')
         examples = filter(None, examples)
         # creating Example objects also clean up part-of-speech markers
