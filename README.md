@@ -28,6 +28,8 @@ Completed:
    - Distinguish special readings (marked in the table as indented/1字下げ).
  - Example words
    - Use examples to delimit okurigana in kun-readings
+     - Including inflected examples, or "double okurigana" (like 成り立ち)
+   - Handle POS markers :〔副〕,〔接〕, '……',
  - Old kanji
    - Handle 弁:[辨, 瓣, 辯].
    - Handle 亀/龜 as Unicode.
@@ -45,7 +47,7 @@ Completed:
 
 Yet to be done:
  - Examples:
-   - Handle POS markers :〔副〕,〔接〕, '……',
+   - Handle examples with （） like those for 羽
  - Notes (参考)
    - Distinguish kanji-scoped notes from reading-scoped (almost done; need to
      handle jukujikun better).
