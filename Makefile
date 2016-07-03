@@ -7,7 +7,7 @@ joyopdf = $(cachedir)/joyokanjihyo_20101130.pdf
 joyotxt = $(cachedir)/joyokanjihyo_20101130.txt
 pdfbox = $(cachedir)/pdfbox-app-2.0.2.jar
 
-all: $(joyotxt) joyodb/defs.py $(moduledir)/__init__.py
+all: $(joyotxt) $(moduledir)/__init__.py
 
 $(joyotxt): $(joyopdf) $(pdfbox)
 	java -jar $(pdfbox) ExtractText $(joyopdf) -console > $(joyotxt)
