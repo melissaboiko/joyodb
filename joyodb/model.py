@@ -1,5 +1,7 @@
 # database/ORM models
 
+import logging
+
 import romkan
 import regex as re
 from joyodb import *
@@ -440,8 +442,8 @@ class Reading:
         'あわ.ただしい'
 
         """
-        if '（' in examples_str:
-            print("TODO: skipping complex example list: %s" % examples_str)
+        if '（' in examples_str or '「' in examples_str:
+            logging.warning("TODO: skipping complex example list: %s" % examples_str)
             return
 
         examples_str = popularize(examples_str)
