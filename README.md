@@ -86,6 +86,7 @@ Yet to be done:
 How to recreate the files
 =========================
 
+     pip3 install romkan
      pip3 install ostruct
      pip3 install regex # newer version of 're'
      git clone https://github.com/leoboiko/joyodb.git
@@ -94,3 +95,10 @@ How to recreate the files
      bin/convert_joyodb
 
 Output will be in `output/` directory.
+
+How to test
+===========
+
+    apt-get install rsync python3-lxml python3-beautifulsoup mecab unidic-mecab
+    pip3 install mecab-python3
+    make test # (needs Internet)
