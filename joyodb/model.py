@@ -178,6 +178,63 @@ def all_suffixes(string):
         suffixes.append(string[-suffix_length:])
     return(suffixes)
 
+# Used to lemmatize (de-inflect) verbs in okurigana processing.
+#
+# Luckly, no actual example uses a te-form or ta-form, so we don't need to
+# handle them.
+INFLECTION = {
+    'う': '[わえいおう]',
+    'く': '[かけきこく]',
+    'す': '[させしそす]',
+    'つ': '[たてちとつ]',
+    'ぬ': '[なねにのぬ]',
+    'ふ': '[はへひほふ]',
+    'む': '[まめみもむ]',
+    'る': '[られりろる]',
+}
+
+def delimit_okurigana(canonical_reading, example):
+    """Find where to delimit okurigana, based on the example.
+
+    >>> delimit_okurigana('たよる', '頼る')
+    'たよ.る'
+
+    It can handle verbal inflections:
+    >>> delimit_okurigana('たよる', '頼り')
+    'たよ.る'
+
+    And intra-word okurigana:
+    >>> delimit_okurigana('やつ', '八つ当たり')
+    'や.つ'
+
+    And the two combined:
+    >>> delimit_okurigana('ゆる', '揺り返し')
+    'ゆ.る'
+
+    It ignores a trailing だ in the example, for na-adjectives:
+    >>> delimit_okurigana('しずか', '静かだ')
+    'しず.か'
+
+    It does nothing if the example isn't okurigana:
+    >>> delimit_okurigana('ほん', '本')
+    'ほん'
+    """
+
+    kanji = example[0]
+
+    for suffix in all_suffixes(canonical_reading):
+        ok_regex = kanji + suffix
+        last = ok_regex[-1]
+        if last in INFLECTION.keys():
+            ok_regex = re.sub('.$', INFLECTION[last], ok_regex)
+        ok_regex += 'だ?'
+
+        match = re.match(ok_regex, example)
+        if match:
+            prefix = canonical_reading[0:-len(suffix)]
+            return(prefix + '.' + suffix)
+    return(canonical_reading)
+
 class Reading:
     """A kanji reading.
 
@@ -272,7 +329,21 @@ class Reading:
         >>> r.examples[0].example
         '嫌だ'
 
-        This function won't generate spurious okurigana from partial matches:
+        The function is able to handle "double okurigana":
+        >>> k = Kanji('六')
+        >>> r = Reading(k, reading='むつ')
+        >>> r.add_examples('六つ切り')
+        >>> r.reading
+        'む.つ'
+
+        Even for verbs:
+        >>> k = Kanji('生')
+        >>> r = Reading(k, reading='おう')
+        >>> r.add_examples('生い立ち')
+        >>> r.reading
+        'お.う'
+
+        But it won't generate spurious okurigana from partial matches:
         >>> k = Kanji('恥')
         >>> r = Reading(k, reading='はじる')
         >>> r.add_examples('恥じる')
@@ -314,33 +385,23 @@ class Reading:
             clean_reading = self.reading.replace('.', '')
             for example_obj in examples:
                 example = example_obj.example
-                if not re.match(r"%s\p{Hiragana}+$" % self.kanji.kanji, example):
-                    # Ignore non-okurigana examples
-                    continue
-                for suffix in all_suffixes(clean_reading):
-                    # accept a だ because they add it to examples, in the case
-                    # of na-adjectives.
-                    match = re.search('^(.*)(%sだ?)$' % suffix, example)
-                    if match:
-                        prefix = clean_reading[:-len(suffix)]
-                        new_reading = prefix + '.' + suffix
+                new_reading = delimit_okurigana(clean_reading, example)
 
-                        if clean_reading == self.reading:
-                            # This is the first time we calculated a dotted reading.
-                            self.reading = new_reading
-                        else:
-                            # We already had a dotted reading calculated;
-                            # let's ensure it's the same.
-                            if not self.reading == new_reading:
-                                raise(ValueError("\n".join([
-                                    "Example generated different okurigana:",
-                                    "old: " + self.reading,
-                                    "new: " + new_reading,
-                                    "example: " + example,
-                                    "prefix: " + prefix,
-                                    "suffix: " + suffix,
-                                ])))
-                        break
+                if '.' in new_reading:
+                    if clean_reading == self.reading:
+                        # This is the first time we calculated a dotted reading.
+                        self.reading = new_reading
+                    else:
+                        # We already had a dotted reading calculated;
+                        # let's ensure it's the same.
+                        if not self.reading == new_reading:
+                            raise(ValueError("\n".join([
+                                "Example generated different okurigana:",
+                                "old: " + self.reading,
+                                "new: " + new_reading,
+                                "example: " + example,
+                            ])))
+                    break
 
         self.examples += examples
 
