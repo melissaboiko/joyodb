@@ -27,7 +27,7 @@ $(moduledir)/__init__.py: $(moduledir)/__init__.py.in
 	    $(moduledir)/__init__.py.in \
 	    >> $(moduledir)/__init__.py
 
-wikipedia_url = https://en.wikipedia.org/wiki/List_of_jōyō_kanji
+wikipedia_url = 'https://en.wikipedia.org/w/index.php?title=List_of_jōyō_kanji&oldid=727326828'
 wikipedia_html = $(cachedir)/List_of_joyo_kanji.html
 
 test: $(wikipedia_html)
