@@ -6,7 +6,7 @@ from ostruct import OpenStruct
 loaded_data = OpenStruct()
 
 # This comes straight from the Makefile.
-JOYOHYO_TXT = $JOYOHYO_TXT
+JOYOHYO_TXT =  $JOYOHYO_TXT
 
 # "The parent dir of the directory of the full path of this file."
 basedir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -24,6 +24,62 @@ outputdir = basedir + '/output'
 for directory in cachedir, outputdir:
     if not os.path.isdir(directory):
         os.mkdir(directory)
+
+# Read the alternative (通用字体) characters from datafile.
+#
+# These three kanji have multiple Unicode codepoints, with minor graphical
+# differences:
+#
+# - U+5861 塡   U+586B 填
+# - U+525D 剝   U+5265 剥
+# - U+9830 頰   U+982C 頬
+#
+# The PDF document uses the ones on the left, which are the default MEXT
+# recommendation.  However, the ones on the right were the only ones available
+# in JIS X 0208, and became widespread. Today most people use them, and they're
+# considered to be alternatives in "popular use" (通用字体).
+#
+# Because I expect most users will want the popular variants, this program
+# converts the data into them.
+#
+# - U+20B9F 𠮟   U+53F1 叱
+#
+# These look pretty much the same, but MEXT says they're technically different
+# characters (cf. 付 3.4 in the PDF).  According to the Joyo document, U+20B9F
+# is the actual Joyo kanji (SHITSU/shikaru "to scold"), and U+53F1 is a
+# separate one (apparently pronounced KA; cf.
+# https://hydrocul.github.io/wiki/blog/2014/1201-shikaru.html ).  The PDF table
+# uses U+20B9F.
+#
+# However, U+20B9F is a newer codepoint, outside the Basic Multilingual Plane;
+# and in fact Unicode's Unihan list SHITSU/shikaru for U+53F1. A search on
+# Google Books in July/2016 found ~56000 hits for 叱る encoded as U+53F1, and
+# only 1 hit for 𠮟る with U+20B9F.  And the PDF itself says that, given
+# current usage, U+53F1 is to be accepted as a variant character (異体字) for
+# SHITSU/shikaru.
+#
+# So in this, too, we'll favor the popular form.  The original MEXT codepoints
+# are available in Kanji.default_variant.
+popular_alternatives = {}
+with open(datadir + '/popular_alternatives.tsv', 'rt') as f:
+    for line in f:
+        default, popular = line.strip().split("\t")
+        popular_alternatives[default] = popular
+
+def popularize(s):
+    r"""Convert MEXT-style kanjis in string to popular alternatives.
+
+    >>> popularize('1: 塡 2: 剝 3: 頰 4: 𠮟')
+    '1: 填 2: 剥 3: 頬 4: 叱'
+
+    >>> s = "Innocuous string  漢字 \n"
+    >>> popularize(s) == s
+    True
+
+    """
+    for default, popular in popular_alternatives.items():
+        s = s.replace(default, popular)
+    return(s)
 
 
 # Read the variants from datafile.
@@ -53,3 +109,4 @@ with open(datadir + '/variants.tsv', 'rt') as f:
         # base Unicode codepoint under most Japanese fonts.
         base, default, accepted = line.split("\t")
         variants[base] = (default, accepted)
+

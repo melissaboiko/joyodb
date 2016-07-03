@@ -2,36 +2,15 @@
 
 import romkan
 import regex as re
-from joyodb import variants
+from joyodb import *
 
 class Kanji:
     """A kanji with its associated Jōyō information:
 
         - kanji: The kanji, as a Unicode character.
 
-        A special case are these characters:
-            - 叱 U+53F1 KA
-            - 𠮟 U+20B9F, SHITSU/shikaru, "to scold" (mandarin: chì).
-
-        These look pretty much the same, but MEXT says they're different
-        characters (cf. 付 3.4 in the PDF).  According to the Joyo document,
-        U+20B9F is the actual Joyo character (SHITSU/shikaru "to scold"), and
-        U+53F1 is a separate one altogether (apparently pronounced
-        KA[1]separate one altogether (apparently pronounced KA; cf.
-        https://hydrocul.github.io/wiki/blog/2014/1201-shikaru.html ).  The PDF
-        table uses U+20B9F.
-
-        However, U+20B9F is a newer codepoint, outside the Basic Multilingual
-        Plane; and in fact Unicode's Unihan list SHITSU/shikaru for U+53F1. A
-        search on Google Books in July/2016 found ~56000 hits for 叱る encoded
-        as U+53F1, and only 1 hit for 𠮟る with U+20B9F.  In my console, as I
-        type this, U+20B9F shows in a different, distressingly small font.  And
-        the PDF itself says that, given current usage, U+53F1 is to be accepted
-        as a variant character (異体字) for SHITSU/shikaru.
-
-        Given this reality, I've reluctantly encoded self.kanji as U+53F1 for
-        this character, because I think this will match most user's
-        expectations.  U+20B9F is available in self.default_variant.
+          Rare codepoints used by MEXT are converted into their popular
+          alternatives (see documentation for popular_alternatives).
 
         - old_kanji: The old version (if any) as a Unicode string, OR a list of
           strings, where applicable (in Joyo 2010, only for 弁).
@@ -39,10 +18,10 @@ class Kanji:
         - acceptable_variant: The alternative form (許容自体), as a Unicode
           string using variation selection characters.
 
-        - default_variant: The standard glyph in the table, specifically
-          encoded as a Unicode string using variation selection characters.  Only
-          defined if acceptable_variant exists; and in the case of 叱 U+53F1,
-          where it lists 𠮟 U+20B9F, MEXT's favoured codepoint.
+        - default_variant: The standard glyph in the table.  If self.kanji is a
+          popular alternative, this is the MEXT-preferred codepoint.  If the
+          character has an acceptable variant, this is a variation sequence for
+          the standard glyph.  Otherwise it's None.
 
         - readings: Associated readings, as a list of Reading objects.
 
@@ -51,9 +30,9 @@ class Kanji:
     """
 
     def __init__(self, kanji):
-        if kanji == '𠮟':
-            self.kanji = '叱' # U+53F1
-            self.default_variant = '𠮟' # U+20B9F
+        if kanji in popular_alternatives.keys():
+            self.kanji = popular_alternatives[kanji]
+            self.default_variant = kanji
         else:
             self.kanji = kanji
 
@@ -300,7 +279,7 @@ class Reading:
     def add_examples(self, examples_str):
         """Add an example to the list.
 
-        Will convert the codepoint for 𠮟 (see documentation for class Kanji):
+        Will convert codepoints to popular variants:
         >>> k = Kanji('𠮟')
         >>> r = Reading(k, reading='シツ')
         >>> r.add_examples('𠮟責') # in goes U+20B9F
@@ -385,8 +364,7 @@ class Reading:
             print("TODO: skipping complex example list: %s" % examples_str)
             return
 
-        if '𠮟' in examples_str:
-            examples_str = examples_str.replace('𠮟', '叱')
+        examples_str = popularize(examples_str)
         examples = examples_str.split('，')
         examples = filter(None, examples)
         # creating Example objects also clean up part-of-speech markers
