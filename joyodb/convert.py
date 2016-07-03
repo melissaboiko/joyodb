@@ -491,7 +491,8 @@ def current_kanji():
     return(loaded_data.kanjis[-1])
 
 def parse_appendix_table():
-    pass
+    # TODO
+    loaded_data.joyotxt.close()
 
 def convert_to_tsv():
     with open(outputdir + '/readings.tsv', 'wt') as f:
