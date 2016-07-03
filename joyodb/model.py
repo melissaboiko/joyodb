@@ -1,6 +1,7 @@
 # database/ORM models
 
 import logging
+logging.basicConfig(format='%(levelname)s: %(message)s')
 
 import romkan
 import regex as re

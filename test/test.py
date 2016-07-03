@@ -3,6 +3,7 @@ import doctest
 import os
 import sys
 import logging
+logging.basicConfig(format='%(levelname)s: %(message)s')
 from collections import defaultdict
 
 from bs4 import BeautifulSoup
