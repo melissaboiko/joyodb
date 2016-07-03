@@ -193,34 +193,36 @@ INFLECTION = {
     'る': '[られりろる]',
 }
 
-def delimit_okurigana(canonical_reading, example):
+def delimit_okurigana(kanji, canonical_reading, example):
     """Find where to delimit okurigana, based on the example.
 
-    >>> delimit_okurigana('たよる', '頼る')
+    >>> delimit_okurigana('頼', 'たよる', '頼る')
     'たよ.る'
 
     It can handle verbal inflections:
-    >>> delimit_okurigana('たよる', '頼り')
+    >>> delimit_okurigana('頼', 'たよる', '頼り')
     'たよ.る'
 
     And intra-word okurigana:
-    >>> delimit_okurigana('やつ', '八つ当たり')
+    >>> delimit_okurigana('八', 'やつ', '八つ当たり')
     'や.つ'
 
     And the two combined:
-    >>> delimit_okurigana('ゆる', '揺り返し')
+    >>> delimit_okurigana('揺', 'ゆる', '揺り返し')
     'ゆ.る'
 
     It ignores a trailing だ in the example, for na-adjectives:
-    >>> delimit_okurigana('しずか', '静かだ')
+    >>> delimit_okurigana('静', 'しずか', '静かだ')
     'しず.か'
 
+    It can find the kanji if it's in the middle:
+    >>> delimit_okurigana('古', 'ふるす', '使い古す')
+    'ふる.す'
+
     It does nothing if the example isn't okurigana:
-    >>> delimit_okurigana('ほん', '本')
+    >>> delimit_okurigana('本', 'ほん', '本')
     'ほん'
     """
-
-    kanji = example[0]
 
     for suffix in all_suffixes(canonical_reading):
         ok_regex = kanji + suffix
@@ -229,7 +231,7 @@ def delimit_okurigana(canonical_reading, example):
             ok_regex = re.sub('.$', INFLECTION[last], ok_regex)
         ok_regex += 'だ?'
 
-        match = re.match(ok_regex, example)
+        match = re.search(ok_regex, example)
         if match:
             prefix = canonical_reading[0:-len(suffix)]
             return(prefix + '.' + suffix)
@@ -394,7 +396,7 @@ class Reading:
             clean_reading = self.reading.replace('.', '')
             for example_obj in examples:
                 example = example_obj.example
-                new_reading = delimit_okurigana(clean_reading, example)
+                new_reading = delimit_okurigana(self.kanji.kanji, clean_reading, example)
 
                 if '.' in new_reading:
                     if clean_reading == self.reading:
