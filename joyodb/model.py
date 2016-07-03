@@ -470,9 +470,6 @@ class Reading:
                         # We already had a dotted reading calculated;
                         # let's check whether it's the same.
                         if not self.reading == new_reading:
-                            # print("Adding multiple readings for: %s, %s" %
-                            #       (self.kanji.kanji, clean_reading))
-
                             self.examples.remove(example_obj)
 
                             # 恐らく mess the algorith because it's listed as
