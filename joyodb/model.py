@@ -543,7 +543,7 @@ class Reading:
         if self.special:
             s += ' (特)'
         if self.examples:
-            s += (', examples: [%s]' % ','.join(self.examples))
+            s += (', examples: [%s]' % ','.join([str(e) for e in self.examples]))
         return(s)
 
 class Example:
@@ -567,6 +567,9 @@ class Example:
         else:
             self.example = example
             self.pos = None
+
+    def __str__(self):
+        return self.example
 
 # With this, one can test with: python3 model.py -v
 if __name__ == "__main__":
