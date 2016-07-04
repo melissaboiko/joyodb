@@ -253,7 +253,7 @@ def main_table_row_fields(line):
     4 fields
     ========
 
-    Four kinds of lines with four fields:
+    Four kinds of lines with four fields, with one exception:
 
     - 4.a: kanji, old_kanji, reading, examples:
     >>> f = main_table_row_fields("涙\t（淚）\t \t \t\t \t \t ルイ\t 感涙，声涙，落涙\t\n")
@@ -261,6 +261,14 @@ def main_table_row_fields(line):
     ...     assert(column in f.keys())
 
     Old kanji is between wide-char parenthesis, （）.
+
+    - 4.a exception: kanji, old_kanji, reading, notes
+
+    >>> f = main_table_row_fields("弥\t（彌）\t \t \t\t \t \t や\t \t 弥生（やよい）\n")
+    >>> for column in ('kanji', 'old_kanji', 'reading', 'notes'):
+    ...     assert(column in f.keys())
+
+    Only in this kanji has this format, with no examples in this line but notes instead.
 
     - 4.b: kanji, reading, examples, notes:
     >>> f = main_table_row_fields("和\t\t \t \t\t \t \t ワ\t 和解，和服，柔和\t 日和（ひより）\n")
@@ -368,7 +376,11 @@ def main_table_row_fields(line):
             dfields['kanji'] = fields[0]
             dfields['old_kanji'] = old_kanji
             dfields['reading'] = fields[2]
-            dfields['examples'] = fields[3]
+            if dfields['kanji'] == '弥':
+                # exceptionally without examples in this line
+                dfields['notes'] = fields[3]
+            else:
+                dfields['examples'] = fields[3]
 
         elif re.match("\p{Han}$", fields[0]):
             if fields[0] == '弁':
