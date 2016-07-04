@@ -1,6 +1,5 @@
 cache/
 joyodb/__init__.py
-output/
 
 *.pyc
 *.swo
