@@ -542,13 +542,13 @@ def convert_to_tsv():
 
                     f.write("%s\t%s\t%s\t%s\t%s\n" % (k.kanji, r.reading, uncommon, e.example, pos))
 
-    with open(outputdir + '/kanji_notes.tsv', 'wt') as f:
+    with open(outputdir + '/notes_for_readings.tsv', 'wt') as f:
         f.write("Kanji\tNote\n")
         for k in loaded_data.kanjis:
             if k.notes:
                 f.write("%s\t%s\n" % (k.kanji, k.notes))
 
-    with open(outputdir + '/reading_notes.tsv', 'wt') as f:
+    with open(outputdir + '/notes_for_kanjis.tsv', 'wt') as f:
         f.write("Kanji\tReading\tUncommon?\tNote\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
