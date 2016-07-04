@@ -98,7 +98,6 @@ class Kanji:
 
     def add_reading(self, reading, kind=None, variation_of=None):
         """See class Reading for arguments."""
-        # TODO: cf. case 羽
 
         self.readings.append(Reading(self, reading,
                                      kind=kind,
@@ -477,6 +476,7 @@ class Reading:
         >>> r.reading
         'あわ.ただしい'
 
+
         """
         if '「' in examples_str:
             examples_str = re.sub(r'「|」|などと使う。', '', examples_str)
@@ -656,6 +656,13 @@ class Reading:
             # self.other = m[1]
             if not re.search('。$', string):
                 self.kanji.pending_note = True
+            return
+
+        m = re.match(r'(「(.*)」，?)+などと使う。$', string)
+        if m:
+            self.notes = string
+            # TODO:
+            # self.other = m[1]
             return
 
         if self.kanji.pending_note == True:

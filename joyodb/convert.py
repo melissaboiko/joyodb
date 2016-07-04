@@ -207,7 +207,7 @@ def main_table_row_fields(line):
     2 fields
     ========
 
-    There are three kinds of lines with 2 fields:
+    There are four kinds of lines with 2 fields:
 
     - 2.a: kanji, reading:
     >>> f = main_table_row_fields("升\t\t \t \t\t \t \t ショウ\t \t\n")
@@ -223,15 +223,20 @@ def main_table_row_fields(line):
     >>> f['examples']
     '哀れ，哀れな話，哀れがる'
 
-    - 2.c: examples, notes
+    - 2.c: reading, notes:
+    >>> f = main_table_row_fields("\t \t \t 　ク\t \t 「宮内庁」などと使う。\n")
+    >>> f['reading']
+    'ク'
+    >>> f['notes']
+    '「宮内庁」などと使う。")'
+
+    - 2.d: examples, notes
     >>> f = main_table_row_fields("\t \t \t \t 真ん中\t 真っ赤（まっか）\n")
     >>> f['examples']
     '真ん中'
     >>> f['notes']
     '真っ赤（まっか）'
 
-    They can be distinguished by the first field: a) a single kanji, b) a kana
-    string, or c) other.
 
     3 fields
     ========
@@ -325,13 +330,17 @@ def main_table_row_fields(line):
     fields = split_main_table_row(line)
     dfields = dict()
 
+    kanji_regexp = re.compile(r"\p{Han}$")
+    reading_regexp = re.compile(r"^[\u3000\p{Hiragana}\p{Katakana}.]+$")
+    # found experimentally
+    examples_regexp = re.compile(r"[\p{Han}\p{Hiragana}\p{Katakana}，（）〔〕…○Ａ]+$")
+
     if len(fields) == 1:
         if fields[0] in ('瓣', '辯'):
             # Exception: old forms of 弁
             dfields['old_kanji'] = fields[0]
 
         elif fields[0][0] in ('極', '慌', '四'):
-            # Exception: examples
             dfields['examples'] = fields[0]
 
         else:
@@ -339,16 +348,19 @@ def main_table_row_fields(line):
             dfields['notes'] = fields[0]
 
     elif len(fields) == 2:
-        if re.match("\p{Han}$", fields[0]):
+        if re.match(kanji_regexp, fields[0]):
             # 2.a: kanji leads
             dfields['kanji'] = fields[0]
             dfields['reading'] = fields[1]
-        elif re.match("^[\u3000\p{Hiragana}\p{Katakana}]", fields[0]):
-            # 2.b: kana string leads
+        elif re.match(reading_regexp, fields[0]):
+            # 2.b or 2.c: reading leads
             dfields['reading'] = fields[0]
-            dfields['examples'] = fields[1]
+            if re.match(examples_regexp, fields[1]):
+                dfields['examples'] = fields[1]
+            else:
+                dfields['notes'] = fields[1]
         else:
-            # 2.c
+            # 2.d
             dfields['examples'] = fields[0]
             dfields['notes'] = fields[1]
 
