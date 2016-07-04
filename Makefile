@@ -7,7 +7,10 @@ joyopdf = $(cachedir)/joyokanjihyo_20101130.pdf
 joyotxt = $(cachedir)/joyokanjihyo_20101130.txt
 pdfbox = $(cachedir)/pdfbox-app-2.0.2.jar
 
-all: $(joyotxt) $(moduledir)/__init__.py
+all: $(cachedir) $(joyotxt) $(moduledir)/__init__.py
+
+$(cachedir):
+	mkdir -p $(cachedir)
 
 $(joyotxt): $(joyopdf) $(pdfbox)
 	java -jar $(pdfbox) ExtractText $(joyopdf) -console > $(joyotxt)
@@ -34,7 +37,7 @@ kanjidic = $(cachedir)/kanjidic_comb_utf8
 jmdict_url = ftp.monash.edu.au::nihongo/JMdict
 jmdict = $(cachedir)/JMdict
 
-test: $(wikipedia_html) $(kanjidic) $(jmdict)
+test: $(cachedir) $(wikipedia_html) $(kanjidic) $(jmdict)
 	python3 test/test.py
 
 $(wikipedia_html):
