@@ -12,32 +12,71 @@ class Kanji:
 
         - kanji: The kanji, as a Unicode character.
 
-          Rare codepoints used by MEXT are converted into their popular
-          alternatives (see documentation for popular_alternatives).
+          The Unicode encoding of this field may differ from that of the
+          standard document; cf. self.standard_character,
+          self.acceptable_variant.
 
-        - old_kanji: The old version (if any) as a Unicode string, OR a list of
-          strings, where applicable (in Joyo 2010, only for 弁).
-
-        - acceptable_variant: The alternative form (許容自体), as a Unicode
-          string using variation selection characters.
-
-        - default_variant: The standard glyph in the table.  If self.kanji is a
-          popular alternative, this is the MEXT-preferred codepoint.  If the
-          character has an acceptable variant, this is a variation sequence for
-          the standard glyph.  Otherwise it's None.
+        - old_kanji: The old version (if any) as a Unicode character, OR a list
+          of character, where applicable (in Joyo 2010, only for 弁).
 
         - readings: Associated readings, as a list of Reading objects.
 
-        - notes: Associated notes (参考), when they're kanji-scoped.  Notes
-          pertaining to specific readings go into their Reading objects.
+        - notes: Associated notes (参考), when they're kanji-scoped.  The
+          original Japanese text as a string.  Notes pertaining to specific
+          readings go into their Reading objects.
+
+        - standard_character: In four cases, the Unicode character favored by
+          the Joyo standard is not normally used; rather, current practice
+          favors alternate characters.  These are called "popular-use character
+          forms" 通用字体 (see Joyo p. 3, and data/popular_alternatives.tsv).
+          In those cases, self.kanji stores the popular character, and
+          self.standard_kanji the Joyo-favored one.
+
+        - accepted_variant: In five cases, the same Unicode character may
+          display graphical variation in glyphs. The choice of variant is left
+          to the font rendering system, unless selected explicitly by variation
+          selector characters. The Joyo standard lists "acceptable" variants
+          (許容字体) between brackets ［］; typically they're more common than
+          the standard's favoured form.
+
+          This field, if available, is a Unicode variation sequence for the
+          graphical variant listed as "accepted".
+
+        - standard_variant: If the character has variant glyphs, this is an
+          Unicode variation sequence to select the graphical variant listed as
+          default (cf. self.accepted_variant).
+
+        - acceped_variant_image: If the character has variant glyphs, this is a
+          file object pointing to a reference png image of the "acceptable"
+          variant (see self.accepted_variant).
+
+        - standard_variant_image: If the character has variant glyphs, this is a
+          file object pointing to a reference png image of the default variant
+          (see self.standard_variant).
+
     """
 
     def __init__(self, kanji):
         if kanji in popular_alternatives.keys():
             self.kanji = popular_alternatives[kanji]
-            self.default_variant = kanji
+            self.standard_character = kanji
         else:
             self.kanji = kanji
+            self.standard_character = None
+
+        if kanji in variants.keys():
+            self.standard_variant, self.accepted_variant = variants[kanji]
+
+            codepoint = '%x' % ord(kanji)
+            file_prefix = datadir + '/variants_img/' + codepoint.lower()
+            self.standard_variant_image = open(file_prefix + '-standard.png', 'rb')
+            self.accepted_variant_image = open(file_prefix + '-accepted.png', 'rb')
+
+        else:
+            self.standard_variant = None
+            self.accepted_variant = None
+            self.standard_variant_image = None
+            self.accepted_variant_image = None
 
         self.old_kanji = None
         self.readings = list()
@@ -82,16 +121,6 @@ class Kanji:
             self.old_kanji.append(string)
         else:
             self.old_kanji = string
-
-    def add_variant(self):
-        """Sets self.acceptable_variant, self.default_variant.
-
-        Pulls from bundled data, because we lose the variants in the .txt
-        conversion..
-        """
-        default, acceptable = variants[self.kanji]
-        self.default_variant = default
-        self.acceptable_variant = acceptable
 
     def append_to_notes(self, string):
         """Intelligently add a line from the "notes" (参考) column.

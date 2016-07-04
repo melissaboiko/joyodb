@@ -168,7 +168,7 @@ class TestLoadedData(unittest.TestCase):
 
         for w_kanji in wikipedia_kanjis.keys():
             if w_kanji in joyodb.popular_alternatives.keys():
-                self.assertEqual(TestLoadedData.kanjis[joyodb.popular_alternatives[w_kanji]].default_variant,
+                self.assertEqual(TestLoadedData.kanjis[joyodb.popular_alternatives[w_kanji]].standard_character,
                                  w_kanji)
             else:
                 self.assertEqual(TestLoadedData.kanjis[w_kanji].kanji, w_kanji)

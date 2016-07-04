@@ -155,9 +155,6 @@ def parse_main_table_row(line):
     if 'old_kanji' in fields.keys():
         current.add_old_kanji(fields['old_kanji'])
 
-    if 'variant_kanji' in fields.keys():
-        current.add_variant()
-
     if 'reading' in fields.keys():
         current.add_reading(fields['reading'])
 
@@ -298,14 +295,14 @@ def main_table_row_fields(line):
     >>> for column in ('kanji', 'old_kanji', 'reading', 'examples', 'notes'):
     ...     assert(column in f.keys())
 
-    - 5.b: kanji with accepted variant form (許容字体) :
+    - 5.b: kanji with accepted variant form (許容字体):
     >>> f = main_table_row_fields("遡\t［遡］\t \t \t\t \t \t ソ\t 遡及，遡上\t ［遡］＝許容字体，\n")
-    >>> for column in ('kanji', 'variant_kanji', 'reading', 'examples', 'notes'):
+    >>> for column in ('kanji', 'reading', 'examples', 'notes'):
     ...     assert(column in f.keys())
 
     The encoding of the variant form is lost in the pdftoolbox conversion, so
-    `variant_kanji` will show up identical to `kanji` here.  We restore it
-    later.
+    the second field here is useless.  The information is restored by class
+    Kanji.
 
     - 5.c: kanji with unencoded old form:
     >>> f = main_table_row_fields("亀\t（ ）\t \t \t\t \t \t キ\t 亀裂\t\n")
@@ -417,9 +414,8 @@ def main_table_row_fields(line):
             assert(match)
             dfields['kanji'] = fields[0]
 
-            # this value is bogus in the .txt; but later class Kanji will
-            # search the proper variants from pre-bundled data.
-            dfields['variant_kanji'] = match[1]
+            # throw away match[1]; it's bogus in the .txt, and will be
+            # identical to fields[0].
 
             dfields['reading'] = fields[2]
             dfields['examples'] = fields[3]
