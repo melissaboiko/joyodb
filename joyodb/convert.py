@@ -226,9 +226,9 @@ def main_table_row_fields(line):
     - 2.c: reading, notes:
     >>> f = main_table_row_fields("\t \t \t 　ク\t \t 「宮内庁」などと使う。\n")
     >>> f['reading']
-    'ク'
+    '　ク'
     >>> f['notes']
-    '「宮内庁」などと使う。")'
+    '「宮内庁」などと使う。'
 
     - 2.d: examples, notes
     >>> f = main_table_row_fields("\t \t \t \t 真ん中\t 真っ赤（まっか）\n")
@@ -330,17 +330,13 @@ def main_table_row_fields(line):
     fields = split_main_table_row(line)
     dfields = dict()
 
-    kanji_regexp = re.compile(r"\p{Han}$")
-    reading_regexp = re.compile(r"^[\u3000\p{Hiragana}\p{Katakana}.]+$")
-    # found experimentally
-    examples_regexp = re.compile(r"[\p{Han}\p{Hiragana}\p{Katakana}，（）〔〕…○Ａ]+$")
-
     if len(fields) == 1:
         if fields[0] in ('瓣', '辯'):
             # Exception: old forms of 弁
             dfields['old_kanji'] = fields[0]
 
-        elif fields[0][0] in ('極', '慌', '四'):
+        elif is_examples(fields[0]):
+            assert(fields[0][0] in ('極', '慌', '四'))
             dfields['examples'] = fields[0]
 
         else:
@@ -348,14 +344,14 @@ def main_table_row_fields(line):
             dfields['notes'] = fields[0]
 
     elif len(fields) == 2:
-        if re.match(kanji_regexp, fields[0]):
+        if is_kanji(fields[0]):
             # 2.a: kanji leads
             dfields['kanji'] = fields[0]
             dfields['reading'] = fields[1]
-        elif re.match(reading_regexp, fields[0]):
+        elif is_reading(fields[0]):
             # 2.b or 2.c: reading leads
             dfields['reading'] = fields[0]
-            if re.match(examples_regexp, fields[1]):
+            if is_examples(fields[1]):
                 dfields['examples'] = fields[1]
             else:
                 dfields['notes'] = fields[1]
@@ -365,26 +361,22 @@ def main_table_row_fields(line):
             dfields['notes'] = fields[1]
 
     elif len(fields) == 3:
-        if re.match("\p{Han}$", fields[0]):
+        if is_kanji(fields[0]):
             # 3.a: kanji leads
             dfields['kanji'] = fields[0]
             dfields['reading'] = fields[1]
             dfields['examples'] = fields[2]
         else:
             # 3.b: reading leads
-            assert(re.match("^[\u3000\p{Hiragana}\p{Katakana}]", fields[0]))
             dfields['reading'] = fields[0]
             dfields['examples'] = fields[1]
             dfields['notes'] = fields[2]
 
 
     elif len(fields) == 4:
-        match = re.match("（(.)）$", fields[1])
-        if match:
-            # 4.a: old_kanji between wide-char parenthesis on second field. We
-            # extract it from the parenthesis.
-            old_kanji = match[1]
-
+        old_kanji = extract_old_kanji(fields[1])
+        if old_kanji:
+            # 4.a: old_kanji line.
             dfields['kanji'] = fields[0]
             dfields['old_kanji'] = old_kanji
             dfields['reading'] = fields[2]
@@ -394,7 +386,7 @@ def main_table_row_fields(line):
             else:
                 dfields['examples'] = fields[3]
 
-        elif re.match("\p{Han}$", fields[0]):
+        elif is_kanji(fields[0]):
             if fields[0] == '弁':
                 # 4.d exception: old kanji without parenthesis.
                 dfields['kanji'] = fields[0]
@@ -416,11 +408,11 @@ def main_table_row_fields(line):
             dfields['notes'] = fields[3]
 
     elif len(fields) == 5:
-        match = re.match("（(.)）$", fields[1])
-        if match:
-            # 5.a: kanji with old form
+        old_kanji = extract_old_kanji(fields[1])
+        if old_kanji:
+            # 5.a: kanji with old form, examples, notes
             dfields['kanji'] = fields[0]
-            dfields['old_kanji'] = match[1]
+            dfields['old_kanji'] = old_kanji
             dfields['reading'] = fields[2]
             dfields['examples'] = fields[3]
             dfields['notes'] = fields[4]
@@ -445,6 +437,16 @@ def main_table_row_fields(line):
             dfields['examples'] = fields[3]
             dfields['notes'] = fields[4]
 
+    if 'kanji' in dfields.keys():
+        assert(is_kanji(dfields['kanji']))
+    if 'old_kanji' in dfields.keys():
+        assert(is_kanji(dfields['old_kanji']))
+    if 'reading' in dfields.keys():
+        assert(is_reading(dfields['reading']))
+    if 'examples' in dfields.keys():
+        assert(is_examples(dfields['examples']))
+    if 'notes' in dfields.keys():
+        assert(is_notes(dfields['notes']))
     return(dfields)
 
 
@@ -501,6 +503,52 @@ def split_main_table_row(line):
     fields = line.split("\ue001")
 
     return(fields)
+
+
+kanji_regexp = re.compile(r"^\p{Han}$")
+def is_kanji(field):
+    return(re.match(kanji_regexp, field))
+
+def extract_old_kanji(field):
+    """Return None if it isn't an old kanji field."""
+    match = re.match(r"^（(\p{Han})）$", field)
+    if match:
+        return(match[1])
+    else:
+        return None
+
+reading_regexp = re.compile(r"^[\u3000\p{Hiragana}\p{Katakana}]+$")
+def is_reading(field):
+    return(re.match(reading_regexp, field))
+
+# found experimentally; it doesn't match glossed examples, which are
+# indistinguishable from notes.
+examples_regexp = re.compile(r"[\p{Han}\p{Hiragana}\p{Katakana}，〔〕…○Ａ]+$")
+glossed_examples = [
+    '一羽（わ）',
+    '六羽（ぱ）',
+    '三日（みっか）',
+    '四日（よっか）',
+    '一把（ワ）',
+    '三把（バ）',
+    '十把（パ）',
+]
+
+def is_examples(field):
+    if re.match(examples_regexp, field):
+        return True
+    else:
+        parts = field.split('，')
+        for part in parts:
+            if part in glossed_examples:
+                return True
+
+    return False
+
+def is_notes(field):
+    return(not is_kanji(field)
+           and not is_reading(field)
+           and not is_examples(field))
 
 def add_kanji(string):
     "Add a kanji object to loaded_data."
