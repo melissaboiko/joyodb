@@ -37,7 +37,7 @@ kanjidic = $(cachedir)/kanjidic_comb_utf8
 jmdict_url = ftp.monash.edu.au::nihongo/JMdict
 jmdict = $(cachedir)/JMdict
 
-test: $(cachedir) $(wikipedia_html) $(kanjidic) $(jmdict)
+test: all $(wikipedia_html) $(kanjidic) $(jmdict)
 	python3 test/test.py
 
 $(wikipedia_html):
