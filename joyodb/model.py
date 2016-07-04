@@ -474,23 +474,49 @@ class Reading:
         """
         if '「' in examples_str:
             examples_str = re.sub(r'「|」|などと使う。', '', examples_str)
-        elif '（' in examples_str or '「' in examples_str:
-            logging.warning("TODO: skipping complex example list: %s" % examples_str)
-            return
 
         examples_str = popularize(examples_str)
         examples = examples_str.split('，')
         examples = list(filter(None, examples))
 
-        blah=False
-        # creating Example objects also clean up part-of-speech markers
-        examples = [Example(e) for e in examples]
-        self.examples += examples
+        for example in examples:
+
+            gloss_match = re.match('(.*)（(.*)）$', example)
+            if gloss_match:
+                # we treat the glossed variations in the examples list as their
+                # own, distinct special readings .
+
+                example = gloss_match[1]
+                gloss = gloss_match[2]
+
+                if 'っ' in gloss:
+                    # joyodb considers e.g. 三日 みっか to be a variation
+                    # of the reading み.  we add みっ as a distinct
+                    # reading.
+                    gloss = re.sub(r'っ.*', 'っ', gloss)
+
+                logging.info("Adding extra special reading and example: %s, %s, %s" %
+                             (self.kanji.kanji, gloss, example))
+                # "\u3000" will register it as a special reading.
+                self.kanji.add_reading("\u3000" + gloss)
+                self.kanji.add_examples(example)
+
+                # tuck new reading below, because the last reading in the list
+                # is the one that will get new examples from the table.
+                self.kanji.readings[-1], self.kanji.readings[-2] = (
+                    self.kanji.readings[-2], self.kanji.readings[-1]
+                )
+
+            else:
+                # normal example, without glosses
+
+                # creating Example objects also clean up part-of-speech markers
+                self.examples.append(Example(example))
 
         if self.kind == 'Kun':
             clean_reading = self.reading.replace('.', '')
 
-            for example_obj in examples:
+            for example_obj in self.examples:
                 example = example_obj.example
                 new_reading = delimit_okurigana(self.kanji.kanji, clean_reading, example)
 
@@ -513,6 +539,9 @@ class Reading:
 
                             self.kanji.add_reading(clean_reading)
                             self.kanji.add_examples(example)
+                            self.kanji.readings[-1], self.kanji.readings[-2] = (
+                                self.kanji.readings[-2], self.kanji.readings[-1]
+                            )
 
 
     def romaji(self):
@@ -672,6 +701,7 @@ class Example:
     def __init__(self, example):
         """Model for each item in a list of examples (例 column).
 
+         - self.reading: The parent Reading object.
          - self.example: The cleaned text string.
          - self.pos: If a part-of-speech marker is given, this is set to one of
           'Adverb', 'Conjunction' or 'Suffix'.

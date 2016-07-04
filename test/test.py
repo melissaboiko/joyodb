@@ -73,6 +73,16 @@ KANJIDIC_MISSING_READINGS = [
     # this one was added by me; on the table it's listed as an example of
     # おそ.れる
     ('恐', 'おそ.らく'), # example: 恐らく
+
+    # these variations were added by me as independent, special readings
+    ('羽', 'わ'),   # example: 一羽
+    ('羽', 'ば'),   # example: 三羽
+    ('羽', 'ぱ'),   # example: 六羽
+    ('把', 'ワ'),   # example: 一把
+    ('把', 'バ'),   # example: 三把
+    ('把', 'パ'),   # example: 十把
+    ('三', 'みっ'), # example: 三日
+    ('四', 'よっ'), # example: 四日
 ]
 
 JMDICT_MISSING_EXAMPLES = []
