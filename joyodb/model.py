@@ -472,7 +472,9 @@ class Reading:
         'あわ.ただしい'
 
         """
-        if '（' in examples_str or '「' in examples_str:
+        if '「' in examples_str:
+            examples_str = re.sub(r'「|」|などと使う。', '', examples_str)
+        elif '（' in examples_str or '「' in examples_str:
             logging.warning("TODO: skipping complex example list: %s" % examples_str)
             return
 
