@@ -504,7 +504,7 @@ def parse_appendix_table():
 
 def convert_to_tsv():
     with open(outputdir + '/readings.tsv', 'wt') as f:
-        f.write("Kanji\tReading\tRomaji\tType\tUncommon?\n")
+        f.write("Kanji\tReading\tRomaji\tType\tUncommon?\tVariation of\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
                 f.write(k.kanji + "\t")
@@ -512,7 +512,9 @@ def convert_to_tsv():
                 f.write(r.romaji() + "\t")
                 f.write(r.kind + "\t")
                 if r.uncommon:
-                    f.write('Y')
+                    f.write("Y\t")
+                if r.variation_of:
+                    f.write(r.variation_of)
                 f.write("\n")
 
     with open(outputdir + '/old_kanji.tsv', 'wt') as f:
