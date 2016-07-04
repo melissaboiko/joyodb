@@ -42,32 +42,36 @@ WIKIPEDIA_ONLY_OLDKANJI = [
 ]
 
 KANJIDIC_MISSING_READINGS = [
-    ('惧', 'グ'), # example: 危惧
-    ('塞', 'ふさ.がる'), # example: 塞がる
-    ('守', 'も.り'), # example: お守り
-    ('振', 'ふ.れる'), # example: 振れる
-    ('羨', 'うらや.ましい'), # example: 羨ましい
-    ('曽', 'ゾ'), # example: 未曽有
-    ('速', 'はや.まる'), # example: 速まる
     ('中', 'ジュウ'), # example: ○○中
-    ('貪', 'ドン'), # example: 貪欲
     ('丼', 'どん'), # example: 牛丼
     ('務', 'つと.まる'), # example: 務まる
-    ('踊', 'おど.り'), # example: 踊り # clean redundant inflections like this?
-    ('謡', 'うたい'), # example: 謡, 素謡
-    ('絡', 'から.める'), # example: 絡める
-    ('籠', 'こ.もる'), # example: 籠もる
-    ('宛', 'あて.る'), # example: 宛先
-    ('詣', 'もうで.る'), # example: 初詣
-    ('建', 'たて.る'), # example: 建物
-    ('受', 'うけ.る'), # example: 受付
+    ('塞', 'ふさ.がる'), # example: 塞がる
+    ('守', 'も.り'), # example: お守り
+    ('惧', 'グ'), # example: 危惧
+    ('振', 'ふ.れる'), # example: 振れる
+    ('曽', 'ゾ'), # example: 未曽有
     ('植', 'うえ.る'), # example: 植木
-    ('請', 'うけ.る'), # example: 請負
-    ('替', 'かえ.る'), # example: 両替
     ('漬', 'つけ.る'), # example: 漬物
+    ('籠', 'こ.もる'), # example: 籠もる
+    ('絡', 'から.める'), # example: 絡める
+    ('羨', 'うらや.ましい'), # example: 羨ましい
+    ('詣', 'もうで.る'), # example: 初詣
+    ('謡', 'うたい'), # example: 謡, 素謡
+    ('貪', 'ドン'), # example: 貪欲
+    ('速', 'はや.まる'), # example: 速まる
+
+    # these are more limitations from this code
+    ('受', 'うけ.る'), # example: 受付
+    ('宛', 'あて.る'), # example: 宛先
+    ('建', 'たて.る'), # example: 建物
+    ('替', 'かえ.る'), # example: 両替
+    ('請', 'うけ.る'), # example: 請負
+
+    # redundant inflection; there's already おど.る
+    ('踊', 'おど.り'), # example: 踊り
 
     # this one was added by me; on the table it's listed as an example of
-    # 恐れる
+    # おそ.れる
     ('恐', 'おそ.らく'), # example: 恐らく
 ]
 
