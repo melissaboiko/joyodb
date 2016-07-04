@@ -13,9 +13,8 @@ TSV, JSON, SQL and HTML.  To minimize human error, the data is parsed
 automatically as much as possible.  The results will be tested to ensure
 consistency.
 
-Most users won't have to run the scripts to extract the data; in the future,
-you'll be able to download the output directly from this repository, in your
-favourite format.
+Most users won't have to run the scripts to extract the data; you can just
+download the data directly from the output directory.
 
 
 Roadmap/TODO
@@ -41,6 +40,7 @@ Roadmap/TODO
    - Convert little-used codepoints to popular use alternatives (通用字体:
      塡 剝 頰 → 填 剥 頬).
    - Convert 叱 U+53F1 into common alternate (異体字) 𠮟 U+20B9F.
+   - Reference images 
  - Notes (参考)
    - Save full note as text
      - Handle notes spanning multiple lines
@@ -53,8 +53,6 @@ Roadmap/TODO
    - examples: against JMdict (edict)
 
 ## Yet to be done
-
- - Decide how to mark 恐らく as special
 
  - Notes (参考)
    - Distinguish kanji-scoped notes from reading-scoped (almost done; need to
@@ -75,8 +73,6 @@ Roadmap/TODO
  - Tests
    - notes: write at least one test for each type of parsed note
 
- - Reference images for variant glyphs (許容字体)
-
  - Parse appendix
 
  - Output types:
@@ -84,7 +80,11 @@ Roadmap/TODO
    - JSON
    - HTML table
 
- - XTSU in output
+ - Document:
+   - General data format
+   - XTSU in output
+   - https://namakajiri.net/nikki/joyo-kanji-variants-the-curious-case-of-and-%e5%8f%b1/
+   - Reading variations
 
 How to recreate the files
 =========================
