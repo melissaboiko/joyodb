@@ -30,6 +30,9 @@ Roadmap/TODO
    - Use examples to delimit okurigana in kun-readings
      - Including inflected examples, and "double okurigana" (like 成り立ち)
    - Handle POS markers :〔副〕,〔接〕, '……',
+   - Treat glossed variations as different, special readings
+   - Handle examples with explicative text and 「」
+
  - Old kanji
    - Handle 弁:[辨, 瓣, 辯].
    - Handle 亀/龜 as Unicode.
@@ -52,10 +55,6 @@ Roadmap/TODO
 ## Yet to be done
 
  - Decide how to mark 恐らく as special
-
- - Examples:
-   - Handle examples with （） like those for 羽
-   - Handle examples with 「」
 
  - Notes (参考)
    - Distinguish kanji-scoped notes from reading-scoped (almost done; need to
@@ -84,6 +83,8 @@ Roadmap/TODO
    - SQL
    - JSON
    - HTML table
+
+ - XTSU in output
 
 How to recreate the files
 =========================
