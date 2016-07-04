@@ -20,7 +20,8 @@ favourite format.
 
 Roadmap/TODO
 ============
-Completed:
+
+## Completed
 
  - On- and kun-readings
    - Romaji converter.
@@ -48,7 +49,8 @@ Completed:
    - readings: against kanjidic
    - examples: against JMdict (edict)
 
-Yet to be done:
+## Yet to be done
+
  - Decide how to mark 恐らく as special
 
  - Examples:
