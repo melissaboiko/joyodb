@@ -101,6 +101,6 @@ Output will be in `output/` directory.
 How to test
 ===========
 
-    apt-get install rsync python3-lxml python3-beautifulsoup mecab unidic-mecab
+    apt-get install rsync python3-lxml python3-bs4 mecab unidic-mecab
     pip3 install mecab-python3
     make test # (needs Internet)
