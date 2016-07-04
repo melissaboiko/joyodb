@@ -96,11 +96,13 @@ class Kanji:
         s += ' [%s]' % ','.join([r.reading for r in self.readings])
         return(s)
 
-    def add_reading(self, reading, kind=None):
+    def add_reading(self, reading, kind=None, variation_of=None):
         """See class Reading for arguments."""
         # TODO: cf. case 羽
 
-        self.readings.append(Reading(self, reading, kind))
+        self.readings.append(Reading(self, reading,
+                                     kind=kind,
+                                     variation_of=variation_of))
 
 
     def add_examples(self, examples):
@@ -357,10 +359,13 @@ class Reading:
         - uncommon: If true, this is a rarely-used reading, or a prefecture-name
                    reading.  This is equivalento to readings indented
                    ("1字下げ) in the PDF table.
+        - variation_of: If true, this isn't listed as a separate reading in the
+                        Joyo table, but as a variant of another reading (which
+                        is given as a string).
         - notes: The "notes" (参考) column, when it's reading-scoped.
     """
 
-    def __init__(self, kanji, reading, kind=None):
+    def __init__(self, kanji, reading, variation_of=None, kind=None):
         self.kanji = kanji
         if reading[0] == "\u3000":
             self.reading = reading[1:]
@@ -379,6 +384,7 @@ class Reading:
             else:
                 self.kind = 'Kun'
 
+        self.variation_of = variation_of
         self.notes = ''
 
     def add_examples(self, examples_str):
@@ -484,7 +490,7 @@ class Reading:
             gloss_match = re.match('(.*)（(.*)）$', example)
             if gloss_match:
                 # we treat the glossed variations in the examples list as their
-                # own, distinct special readings .
+                # own entries.
 
                 example = gloss_match[1]
                 gloss = gloss_match[2]
@@ -495,10 +501,10 @@ class Reading:
                     # reading.
                     gloss = re.sub(r'っ.*', 'っ', gloss)
 
-                logging.info("Adding extra special reading and example: %s, %s, %s" %
-                             (self.kanji.kanji, gloss, example))
-                # "\u3000" will register it as a special reading.
-                self.kanji.add_reading("\u3000" + gloss)
+                logging.info("Adding reading variation for example: %s, %s: %s, %s" %
+                             (self.kanji.kanji, self.reading, gloss, example))
+                self.kanji.add_reading(gloss,
+                                       variation_of=self.reading)
                 self.kanji.add_examples(example)
 
                 # tuck new reading below, because the last reading in the list
@@ -531,13 +537,16 @@ class Reading:
                             self.examples.remove(example_obj)
 
                             # 恐らく mess the algorith because it's listed as
-                            # an example of おそれる – this only makes sense if
-                            # you assume Classical grammar.  We just handle it
-                            # as an exception, and add it as a separate reading.
+                            # an example of おそ.れる – this only makes sense if
+                            # you assume Classical grammar.  We handle it
+                            # as a reading variation.
                             if example == '恐らく':
                                 clean_reading = 'おそらく'
+                                variation_of='おそ.れる'
+                            else:
+                                variation_of=None
 
-                            self.kanji.add_reading(clean_reading)
+                            self.kanji.add_reading(clean_reading, variation_of=variation_of)
                             self.kanji.add_examples(example)
                             self.kanji.readings[-1], self.kanji.readings[-2] = (
                                 self.kanji.readings[-2], self.kanji.readings[-1]

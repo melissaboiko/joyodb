@@ -70,19 +70,6 @@ KANJIDIC_MISSING_READINGS = [
     # redundant inflection; there's already おど.る
     ('踊', 'おど.り'), # example: 踊り
 
-    # this one was added by me; on the table it's listed as an example of
-    # おそ.れる
-    ('恐', 'おそ.らく'), # example: 恐らく
-
-    # these variations were added by me as independent, special readings
-    ('羽', 'わ'),   # example: 一羽
-    ('羽', 'ば'),   # example: 三羽
-    ('羽', 'ぱ'),   # example: 六羽
-    ('把', 'ワ'),   # example: 一把
-    ('把', 'バ'),   # example: 三把
-    ('把', 'パ'),   # example: 十把
-    ('三', 'みっ'), # example: 三日
-    ('四', 'よっ'), # example: 四日
 ]
 
 JMDICT_MISSING_EXAMPLES = []
@@ -210,6 +197,15 @@ class TestLoadedData(unittest.TestCase):
             if kanji.kanji != '弁':
                 self.assertEqual(kanji.old_kanji, old_data[kanji.kanji])
 
+    def test_reading_variations(self):
+        for k in joyodb.loaded_data.kanjis:
+            for r in k.readings:
+                base = r.variation_of
+                if base:
+                    matches = [r for r in k.readings
+                               if r.reading == base]
+                    self.assertEqual(len(matches), 1)
+
     def test_against_kanjidic(self):
         kanjidic_data = {}
         with open(kanjidic_file, 'rt') as f:
@@ -225,6 +221,8 @@ class TestLoadedData(unittest.TestCase):
 
         for kanji in joyodb.loaded_data.kanjis:
             for reading in kanji.readings:
+                if reading.variation_of:
+                    continue # variations are not in kanjidic
                 if (kanji.kanji, reading.reading) not in KANJIDIC_MISSING_READINGS:
                     self.assertIn(reading.reading, kanjidic_data[kanji.kanji])
 
