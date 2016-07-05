@@ -788,6 +788,7 @@ class Example:
         else:
             self.example = example
             self.pos = None
+        self.literary = False
 
     def __str__(self):
         return self.example

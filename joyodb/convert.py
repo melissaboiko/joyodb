@@ -737,7 +737,7 @@ def convert_to_tsv():
                 f.write(tsv_line(k.kanji, k.old_kanji))
 
     with open(outputdir + '/examples.tsv', 'wt') as f:
-        f.write("Kanji\tReading\tUncommon reading?\tVariation of\tExample\tPOS of example\n")
+        f.write("Kanji\tReading\tUncommon reading?\tVariation of\tExample\tPOS of example\tLiterary?\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
                 if r.uncommon:
@@ -747,13 +747,19 @@ def convert_to_tsv():
 
                 variation = r.variation_of or ''
 
+
                 for e in r.examples:
                     if e.pos:
                         pos = e.pos
                     else:
                         pos = ''
 
-                    f.write(tsv_line(k.kanji, r.reading, uncommon, variation, e.example, pos))
+                    if e.literary:
+                        lit = 'Y'
+                    else:
+                        lit = ''
+
+                    f.write(tsv_line(k.kanji, r.reading, uncommon, variation, e.example, pos, lit))
 
     with open(outputdir + '/notes_for_kanjis.tsv', 'wt') as f:
         f.write("Kanji\tNote\n")
