@@ -1,5 +1,6 @@
 # database/ORM models
 
+from collections import defaultdict
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
@@ -20,6 +21,13 @@ class Kanji:
           of character, where applicable (in Joyo 2010, only for 弁).
 
         - readings: Associated readings, as a list of Reading objects.
+
+        - compound_readings: A dictionary of compound readings involving this
+          kanji.  The keys are the orthographies and the values are the readings,
+          as kana strings.
+
+        - placename_readings: If present, a dictionary of special readings used
+          in prefectural names.
 
         - notes: Associated notes (参考), when they're kanji-scoped.  The
           original Japanese text as a string.  Notes pertaining to specific
@@ -80,6 +88,8 @@ class Kanji:
 
         self.old_kanji = None
         self.readings = list()
+        self.placename_readings = dict()
+        self.compound_readings = dict()
         self.notes = ''
 
         # if true, next note line should be appended to current note
@@ -149,13 +159,26 @@ class Kanji:
 
         """
 
-        m = re.match(r'(\p{Han}+)（(\p{Hiragana}+)）[府県]$', string)
+        m = re.search(r'\p{Han}\p{Hiragana}*（\p{Hiragana}', string)
         if m:
             self.notes = string
-
-            # TODO:
-            # self.prefecture_reading = (m[1], m[2])
-            return
+            # cf. 茨城（いばらき）県
+            parts = string.split('，')
+            for part in parts:
+                m = re.match(r'(お?)([\p{Han}・\p{Hiragana}]+)（(\p{Hiragana}+)）(.*)$', part)
+                assert(m)
+                prefix = m[1]
+                orthographies = (m[2]).split('・')
+                gloss = m[3]
+                suffix = (m[4])
+                if suffix and suffix in '都道府県':
+                    for ort in orthographies:
+                        self.add_placename_reading(ort, gloss, suffix)
+                else:
+                    for ort in orthographies:
+                        self.add_compound_reading(prefix + ort + suffix,
+                                                  prefix + gloss + suffix)
+                return
 
         m = re.match(r'［(\p{Han})］＝許容字体，', string)
         if m:
@@ -175,6 +198,13 @@ class Kanji:
             return
 
         raise(ValueError("BUG: unknown note format: '%s'" % string))
+
+    def add_placename_reading(self, orthography, gloss, kind):
+        self.placename_readings[orthography] = gloss
+
+    def add_compound_reading(self, orthography, gloss):
+        self.compound_readings[orthography] = gloss
+
 
 def all_suffixes(string):
     """Return a list of all possible suffixes, in decreasing order.
@@ -618,10 +648,6 @@ class Reading:
 
         - ↔ (.+,?)+:  same-reading different-kanji
 
-        - (漢+か*・?)+(か+)か+?: multiple-kanji special reading.  Sometimes it's a
-        regular reading for _this_ kanji, but special reading for the other
-        (compounds are listed for all kanji involved, even if they're regular).
-
         - (「漢+」,?)+(など)?は,.*。
         reading (always?); can span multiple lines.
 
@@ -648,11 +674,13 @@ class Reading:
             self.alternate_orthographies = m[1].split('，')
             return
 
-        m = re.match(r'(お?\p{Han}+\p{Hiragana}*・?)+（(\p{Hiragana}+)）(\p{Hiragana}*)', string)
+        m = re.search(r'\p{Han}\p{Hiragana}*（\p{Hiragana}', string)
         if m:
-            self.notes = string
-            # TODO: data structre
-            return
+            # looks like a gloss note; is it? weed out false positives:
+            if not re.search(r'）」', string):
+                self.kanji.append_to_kanji_notes(string)
+                return
+
 
         m = re.match(r'(「(.*)」，?)+(など)?は，', string)
         if m:
@@ -705,9 +733,14 @@ class Reading:
         if m:
             self.notes = string
             return
+        m = re.search(r'」になる。$', string)
+        if m:
+            self.notes = string
+            return
 
         # no match; let's try it as a kanji-scoped note
         self.kanji.append_to_kanji_notes(string)
+
 
     # pretty representation; useful when debugging
     def __str__(self):

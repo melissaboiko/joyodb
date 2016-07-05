@@ -617,8 +617,9 @@ def parse_appendix_table():
     # hardcoded it.
     appendix['しわす'] = ['師走']
     appendix['しはす'] = ['師走']
+    appendix['はつか'] = ['二十日']
 
-    loaded_data.special_compounds = appendix
+    loaded_data.compound_readings = appendix
     loaded_data.joyotxt.close()
 
 def convert_to_tsv():
@@ -679,13 +680,13 @@ def convert_to_tsv():
 
                     f.write(tsv_line(k.kanji, r.reading, uncommon, e.example, pos))
 
-    with open(outputdir + '/notes_for_readings.tsv', 'wt') as f:
+    with open(outputdir + '/notes_for_kanjis.tsv', 'wt') as f:
         f.write("Kanji\tNote\n")
         for k in loaded_data.kanjis:
             if k.notes:
                 f.write(tsv_line(k.kanji, k.notes))
 
-    with open(outputdir + '/notes_for_kanjis.tsv', 'wt') as f:
+    with open(outputdir + '/notes_for_readings.tsv', 'wt') as f:
         f.write("Kanji\tReading\tUncommon?\tNote\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
@@ -701,11 +702,23 @@ def convert_to_tsv():
                         uncommon,
                         r.notes))
 
-    with open(outputdir + '/special_compounds.tsv', 'wt') as f:
+    with open(outputdir + '/compounds_by_readings.tsv', 'wt') as f:
         f.write("Reading\tOrthography\n")
-        for kana in sorted(loaded_data.special_compounds.keys()):
-            for kanji in sorted(loaded_data.special_compounds[kana]):
+        for kana in sorted(loaded_data.compound_readings.keys()):
+            for kanji in sorted(loaded_data.compound_readings[kana]):
                 f.write(tsv_line(kana, kanji))
+
+    with open(outputdir + '/compounds_by_kanji.tsv', 'wt') as f:
+        f.write("Kanji\tCompound\tReading\n")
+        for k in loaded_data.kanjis:
+            for ort, gloss in k.compound_readings.items():
+                f.write(tsv_line(k.kanji, ort, gloss))
+
+    with open(outputdir + '/placenames.tsv', 'wt') as f:
+        f.write("Kanji\tPlacename\tReading\n")
+        for k in loaded_data.kanjis:
+            for ort, gloss in k.placename_readings.items():
+                f.write(tsv_line(k.kanji, ort, gloss))
 
 def tsv_line(*fields):
     return("\t".join(fields) + "\n")

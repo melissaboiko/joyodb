@@ -286,6 +286,47 @@ class TestLoadedData(unittest.TestCase):
                                 found=True
                     assert(found)
 
+    def test_compound_readings(self):
+        '''Test compound readings from the main table and appendix against each other.'''
+
+        for k in joyodb.loaded_data.kanjis:
+            # Note: placename readings aren't listed on the appendix.
+
+            for ort, gloss in k.compound_readings.items():
+                self.assertIn(k.kanji, ort)
+
+                self.assertIn(gloss, joyodb.loaded_data.compound_readings.keys())
+                self.assertIn(ort, joyodb.loaded_data.compound_readings[gloss])
+
+
+        for gloss, orthographies in joyodb.loaded_data.compound_readings.items():
+            for orthography in orthographies:
+                if gloss == 'しはす':
+                    continue # just test 'しわす'
+
+                for ch in orthography:
+                    if re.match(r'\p{Han}', ch):
+                        k = next(k for k in joyodb.loaded_data.kanjis
+                                 if k.kanji == ch)
+                        all_glosses = list(k.compound_readings.values()) + list(k.placename_readings.values())
+                        if gloss not in all_glosses:
+                            found=False
+                            for reading in [r.to_hiragana() for r in k.readings]:
+                                if reading in gloss:
+                                    logging.info("Assuming regular reading for %s: %s in %s" %
+                                                    (ch, reading, orthography))
+                                    found=True
+
+                            for k_ort, k_gloss in k.compound_readings.items():
+                                if k_gloss in gloss:
+                                    logging.info("Assuming double-compound reading for %s: %s(%s) in %s(%s)" %
+                                                    (ch, k_ort, k_gloss, orthography, gloss))
+                                    found=True
+
+                            if not found:
+                                raise(RuntimeError("Couldn't find compound %s in kanji %s" %
+                                    (orthography, k.kanji)))
+
 
 
 def load_tests(loader, tests, ignore):
