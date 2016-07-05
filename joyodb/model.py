@@ -183,6 +183,19 @@ class Kanji:
             self.joyo_documentation = m[1]
             return
 
+        # hardcoded
+        if string == ('「三位一体」，「従三位」は，「サン'):
+            self.notes = string
+            self.pending_note = True
+            return
+        elif string == ('ミイッタイ」，「ジュサンミ」。'):
+            self.notes += string
+            self.pending_note = False
+            self.add_reading("ミ")
+            self.readings[-1].variation_of = 'イ'
+            self.add_examples('三位一体」，「従三位」')
+            return
+
 
         # no $
         m = re.match(r'(お?)([\p{Han}・\p{Hiragana}]+)（(\p{Hiragana}+)）(.*)', string)
