@@ -183,19 +183,6 @@ class Kanji:
             self.joyo_documentation = m[1]
             return
 
-        # hardcoded
-        if string == ('「三位一体」，「従三位」は，「サン'):
-            self.notes = string
-            self.pending_note = True
-            return
-        elif string == ('ミイッタイ」，「ジュサンミ」。'):
-            self.notes += string
-            self.pending_note = False
-            self.add_reading("ミ")
-            self.readings[-1].variation_of = 'イ'
-            self.add_examples('三位一体」，「従三位」')
-            return
-
 
         # no $
         m = re.match(r'(お?)([\p{Han}・\p{Hiragana}]+)（(\p{Hiragana}+)）(.*)', string)
@@ -687,6 +674,7 @@ class Reading:
 
         """
 
+        # test hardcoded notes first
         if string == '多く文語の「亡き」で使う。':
             self.add_examples('亡き')
             for e in self.examples:
@@ -694,6 +682,33 @@ class Reading:
                     e.literary = True
             self.notes = string
             return
+
+        if string == ('「三位一体」，「従三位」は，「サン'):
+            self.notes = string
+            self.kanji.pending_note = True
+            return
+        elif string == ('ミイッタイ」，「ジュサンミ」。'):
+            self.kanji.readings[-2].notes += string
+            self.kanji.pending_note = False
+
+            self.kanji.add_reading("ミ")
+            self.kanji.readings[-1].variation_of = 'イ'
+            self.kanji.readings[-1].add_examples('三位一体，従三位')
+            return
+
+        # hardcoded
+        if string == ('「春雨」，「小雨」，「霧雨」などは，'):
+            self.notes = string
+            self.kanji.pending_note = True
+            return
+        elif string == ('「はるさめ」，「こさめ」，「きりさめ」。'):
+            self.notes += string
+            self.kanji.pending_note = False
+            self.kanji.add_reading("さめ")
+            self.kanji.readings[-1].variation_of = 'あめ'
+            self.kanji.readings[-1].add_examples('春雨，小雨，霧雨')
+            return
+
 
         m = re.match(r'⇔ *(.+)', string)
         if m:
