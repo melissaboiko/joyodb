@@ -674,13 +674,6 @@ class Reading:
 
         """
 
-        m = re.search(r'\p{Han}\p{Hiragana}*（\p{Hiragana}', string)
-        if m:
-            # looks like a gloss note; is it? weed out false positives:
-            if not re.search(r'）」', string):
-                self.kanji.append_to_kanji_notes(string)
-                return
-
         m = re.match(r'⇔ *(.+)', string)
         if m:
             self.notes = string
