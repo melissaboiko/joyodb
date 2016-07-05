@@ -42,10 +42,14 @@ Roadmap/TODO
    - Convert 叱 U+53F1 into common alternate (異体字) 𠮟 U+20B9F.
    - Reference images 
  - Notes (参考)
+   - Distinguish kanji-scoped notes from reading-scoped ones.
    - Save full note as text
      - Handle notes spanning multiple lines
    - Extract data from notes:
      - Alternate orthographies.
+     - Compounds (test against appendix).
+     - Prefecture names.
+     - Examples marked as literary (文語).
  - Output formats
    - TSV
  - Tests
@@ -57,19 +61,14 @@ Roadmap/TODO
 ## Yet to be done
 
  - Notes (参考)
-   - Distinguish kanji-scoped notes from reading-scoped (almost done; need to
-     handle jukujikun better).
    - Parse and structure the data from notes
      - Alternative orthographies (同訓異字).
      - Pointers to reference section in text.
        - Extract example images.
-     - Prefecture names.
      - Exceptional readings..
        - Unbounded lists (with a "などは").
          - Complement with all available examples from edict.
        - Alternatives ("とも").
-     - Jukujikun/appendix readings.
-       - Filter: only list them for kanji where the reading is not regular.
      - One-off types of notes.
 
  - Tests
