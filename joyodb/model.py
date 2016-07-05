@@ -709,6 +709,10 @@ class Reading:
             self.kanji.readings[-1].add_examples('春雨，小雨，霧雨')
             return
 
+        if string == '「憂き」は，文語の連体形。':
+            e = next(e for e in self.examples if '憂き' in e.example)
+            e.literary = True
+
 
         m = re.match(r'⇔ *(.+)', string)
         if m:
