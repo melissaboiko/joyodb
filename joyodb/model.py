@@ -683,11 +683,11 @@ class Reading:
             self.notes = string
             return
 
-        if string == ('「三位一体」，「従三位」は，「サン'):
+        if string == '「三位一体」，「従三位」は，「サン':
             self.notes = string
             self.kanji.pending_note = True
             return
-        elif string == ('ミイッタイ」，「ジュサンミ」。'):
+        elif string == 'ミイッタイ」，「ジュサンミ」。':
             self.kanji.readings[-2].notes += string
             self.kanji.pending_note = False
 
@@ -696,14 +696,14 @@ class Reading:
             self.kanji.readings[-1].add_examples('三位一体，従三位')
             return
 
-        # hardcoded
-        if string == ('「春雨」，「小雨」，「霧雨」などは，'):
+        if string == '「春雨」，「小雨」，「霧雨」などは，':
             self.notes = string
             self.kanji.pending_note = True
             return
-        elif string == ('「はるさめ」，「こさめ」，「きりさめ」。'):
+        elif string == '「はるさめ」，「こさめ」，「きりさめ」。':
             self.notes += string
             self.kanji.pending_note = False
+
             self.kanji.add_reading("さめ")
             self.kanji.readings[-1].variation_of = 'あめ'
             self.kanji.readings[-1].add_examples('春雨，小雨，霧雨')
