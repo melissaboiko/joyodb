@@ -564,26 +564,44 @@ def parse_appendix_table():
 
 def convert_to_tsv():
     with open(outputdir + '/readings.tsv', 'wt') as f:
-        f.write("Kanji\tReading\tRomaji\tType\tUncommon?\tVariation of\n")
+        f.write("Kanji\tReading\tRomaji\tType\tUncommon?\tVariation of\tAlternative orthographies\n")
         for k in loaded_data.kanjis:
             for r in k.readings:
-                f.write(k.kanji + "\t")
-                f.write(r.reading + "\t")
-                f.write(r.romaji() + "\t")
-                f.write(r.kind + "\t")
+
                 if r.uncommon:
-                    f.write("Y\t")
-                if r.variation_of:
-                    f.write(r.variation_of)
-                f.write("\n")
+                    uncommon = 'Y'
+                else:
+                    uncommon = ''
+
+                if r.alternate_orthographies:
+                    altort = ','.join(r.alternate_orthographies)
+                else:
+                    altort = ''
+
+                f.write(tsv_line(
+                    k.kanji,
+                    r.reading,
+                    r.romaji(),
+                    r.kind,
+                    uncommon,
+                    r.variation_of or '',
+                    altort))
+
+    with open(outputdir + '/alternate_orthographies.tsv', 'wt') as f:
+        f.write("Kanji\tReading\tAlternative orthography\n")
+        for k in loaded_data.kanjis:
+            for r in k.readings:
+                for a in r.alternate_orthographies:
+                    f.write(tsv_line(k.kanji, r.reading, a))
+
 
     with open(outputdir + '/old_kanji.tsv', 'wt') as f:
         for k in loaded_data.kanjis:
             if type(k.old_kanji) is list:
                 for old in k.old_kanji:
-                    f.write("%s\t%s\n" % (k.kanji, old))
+                    f.write(tsv_line(k.kanji, old))
             elif k.old_kanji:
-                f.write("%s\t%s\n" %( k.kanji, k.old_kanji))
+                f.write(tsv_line(k.kanji, k.old_kanji))
 
     with open(outputdir + '/examples.tsv', 'wt') as f:
         f.write("Kanji\tReading\tUncommon reading?\tExample\tPOS of example\n")
@@ -600,13 +618,13 @@ def convert_to_tsv():
                     else:
                         pos = ''
 
-                    f.write("%s\t%s\t%s\t%s\t%s\n" % (k.kanji, r.reading, uncommon, e.example, pos))
+                    f.write(tsv_line(k.kanji, r.reading, uncommon, e.example, pos))
 
     with open(outputdir + '/notes_for_readings.tsv', 'wt') as f:
         f.write("Kanji\tNote\n")
         for k in loaded_data.kanjis:
             if k.notes:
-                f.write("%s\t%s\n" % (k.kanji, k.notes))
+                f.write(tsv_line(k.kanji, k.notes))
 
     with open(outputdir + '/notes_for_kanjis.tsv', 'wt') as f:
         f.write("Kanji\tReading\tUncommon?\tNote\n")
@@ -618,11 +636,13 @@ def convert_to_tsv():
                     uncommon = ''
 
                 if r.notes:
-                    f.write("%s\t%s\t%s\t%s\n" %
-                            (k.kanji,
-                            r.reading,
-                            uncommon,
-                            r.notes))
+                    f.write(tsv_line(
+                        k.kanji,
+                        r.reading,
+                        uncommon,
+                        r.notes))
+def tsv_line(*fields):
+    return("\t".join(fields) + "\n")
 
 def convert_to_sql():
     pass

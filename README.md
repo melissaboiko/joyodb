@@ -44,6 +44,8 @@ Roadmap/TODO
  - Notes (参考)
    - Save full note as text
      - Handle notes spanning multiple lines
+   - Extract data from notes:
+     - Alternate orthographies.
  - Output formats
    - TSV
  - Tests

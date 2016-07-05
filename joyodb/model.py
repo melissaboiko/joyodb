@@ -362,6 +362,10 @@ class Reading:
                         Joyo table, but as a variant of another reading (which
                         is given as a string).
         - notes: The "notes" (参考) column, when it's reading-scoped.
+
+        The following information is parsed from the notes:
+        - alternate_orthographies: List of different kanji spellings for the
+          same sound, marked with a ⇔ on the document.
     """
 
     def __init__(self, kanji, reading, variation_of=None, kind=None):
@@ -385,6 +389,7 @@ class Reading:
 
         self.variation_of = variation_of
         self.notes = ''
+        self.alternate_orthographies = []
 
     def add_examples(self, examples_str):
         """Add an example to the list.
@@ -639,8 +644,8 @@ class Reading:
         m = re.match(r'⇔ *(.+)', string)
         if m:
             self.notes = string
-            # TODO: data structure
-            # TODO: split on ','
+            assert(re.match('[\p{Han}\p{Hiragana}，]+', m[1]))
+            self.alternate_orthographies = m[1].split('，')
             return
 
         m = re.match(r'(お?\p{Han}+\p{Hiragana}*・?)+（(\p{Hiragana}+)）(\p{Hiragana}*)', string)

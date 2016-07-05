@@ -265,6 +265,28 @@ class TestLoadedData(unittest.TestCase):
                         raise(RuntimeError("Could not find example: %s"
                               % e.example))
 
+    def test_alternate_orthographies(self):
+        for k in joyodb.loaded_data.kanjis:
+            for r in k.readings:
+                for a in r.alternate_orthographies:
+                    looks_like_alternate = re.match("^(\p{Han})\p{Hiragana}*$", a)
+                    assert(looks_like_alternate)
+                    alt_kanji_ch = looks_like_alternate[1]
+                    assert(alt_kanji_ch)
+
+                    alt_kanji_list = [obj for obj in joyodb.loaded_data.kanjis
+                                      if obj.kanji == alt_kanji_ch]
+                    assert(len(alt_kanji_list) == 1)
+                    alt_kanji = alt_kanji_list[0]
+
+                    found=False
+                    for their_readings in alt_kanji.readings:
+                        for their_alternates in their_readings.alternate_orthographies:
+                            if k.kanji in their_alternates:
+                                found=True
+                    assert(found)
+
+
 
 def load_tests(loader, tests, ignore):
     """Load doctests into unit tests suite.
