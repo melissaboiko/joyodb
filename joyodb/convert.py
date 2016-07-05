@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 # as of this writing, we need the new regex library to get support for kanji and kana matching:
 # \p{Han}, \p{Hiragana}, \p{Katakana}
 import regex as re
@@ -559,7 +561,64 @@ def current_kanji():
     return(loaded_data.kanjis[-1])
 
 def parse_appendix_table():
-    # TODO
+    appendix = defaultdict(list)
+
+    for line in loaded_data.joyotxt:
+        # skip page numbers and index headers
+        if is_empty(line) or is_page_index(line) or is_sound_index(line):
+            continue
+
+        fields = line.split()
+
+        if len(fields) == 4:
+            # almost all lines of the table result in 4 fields in the txt, as follows:
+
+            appendix[fields[0]].append(fields[1])
+            appendix[fields[2]].append(fields[3])
+
+
+    # these are the ones with multiple kanji orthographies, marked by
+    # long {} in the PDF; they end up bundled together in the TXT
+    multiples = [
+        '海女',
+        '海士',
+        '河原',
+        '川原',
+        '叔父',
+        '伯父',
+        '叔母',
+        '伯母',
+        '母屋',
+        '母家',
+        '数寄屋',
+        '数奇屋',
+        '二十',
+        '二十歳',
+    ]
+
+    for kana, kanjis in appendix.items():
+        for kanji in kanjis:
+            for multiple in multiples:
+                match = re.match('^(%s)(.+)$' % multiple, kanji)
+                if match:
+                    kanji1 = match[1]
+                    kanji2 = match[2]
+                    logging.info("Splitting %s into %s,%s" % (kanji, kanji1, kanji2))
+
+                    appendix[kana].append(kanji1)
+                    appendix[kana].append(kanji2)
+
+                    appendix[kana].remove(kanji)
+                    multiples.remove(kanji1)
+                    multiples.remove(kanji2)
+    assert(multiples == [])
+
+    # the informative note makes this split over several lines; we just
+    # hardcoded it.
+    appendix['しわす'] = ['師走']
+    appendix['しはす'] = ['師走']
+
+    loaded_data.special_compounds = appendix
     loaded_data.joyotxt.close()
 
 def convert_to_tsv():
@@ -641,6 +700,13 @@ def convert_to_tsv():
                         r.reading,
                         uncommon,
                         r.notes))
+
+    with open(outputdir + '/special_compounds.tsv', 'wt') as f:
+        f.write("Reading\tOrthography\n")
+        for kana in sorted(loaded_data.special_compounds.keys()):
+            for kanji in sorted(loaded_data.special_compounds[kana]):
+                f.write(tsv_line(kana, kanji))
+
 def tsv_line(*fields):
     return("\t".join(fields) + "\n")
 
