@@ -327,8 +327,6 @@ class TestLoadedData(unittest.TestCase):
                                 raise(RuntimeError("Couldn't find compound %s in kanji %s" %
                                     (orthography, k.kanji)))
 
-
-
 def load_tests(loader, tests, ignore):
     """Load doctests into unit tests suite.
 
