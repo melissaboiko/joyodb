@@ -38,7 +38,7 @@ class Kanji:
           favors alternate characters.  These are called "popular-use character
           forms" 通用字体 (see Joyo p. 3, and data/popular_alternatives.tsv).
           In those cases, self.kanji stores the popular character, and
-          self.standard_kanji the Joyo-favored one.
+          self.standard_character the Joyo-favored one.
 
         - accepted_variant: In five cases, the same Unicode character may
           display graphical variation in glyphs. The choice of variant is left
@@ -61,6 +61,9 @@ class Kanji:
         - standard_variant_image: If the character has variant glyphs, this is a
           file object pointing to a reference png image of the default variant
           (see self.standard_variant).
+
+        - joyo_documentation: This character has minor graphical variations,
+          documented in the given section of the Joyo text.
 
     """
 
@@ -91,6 +94,7 @@ class Kanji:
         self.placename_readings = dict()
         self.compound_readings = dict()
         self.notes = ''
+        self.joyo_documentation = None
 
         # if true, next note line should be appended to current note
         self.pending_note = False
@@ -136,37 +140,59 @@ class Kanji:
     def append_to_notes(self, string):
         """Intelligently add a line from the "notes" (参考) column.
 
-        This call Reading.append_to_notes() function for current reading.
-        Reading.append_to_notes() will check whether the notes is
-        reading-scoped, or kanji-scoped.  If kanji-scoped, it will forward the
-        note to Kanji.append_to_kanji_notes().
+        If the note is kanji-scoped, add it to self; otherwise call call
+        Reading.append_to_notes() function for current reading.
 
-        These functions also deal with notes fields being continuations of
-        previous lines."""
-        self.readings[-1].append_to_notes(string)
+        These functions also deal with notes fields split among several lines.
 
-    def append_to_kanji_notes(self, string):
-        """Intelligently add a kanji-scoped note.
+        Kanji-scoped notes can be:
 
         - .+[府県]: prefecture-name uncommon reading.
 
 
-        - ［漢］＝許容字体，\n *[(付).+]: reference for variant forms, encoded as
-        [] in kanji column.
+        - *[(付).*]: reference for in-text sections about minor graphical
+        variations.
 
-        - *[(付).*]: reference for documentation about minor graphical
-        variation.
+        - ［漢］＝許容字体，\n *[(付).+]: reference for variant forms; also
+        encoded as [] in kanji column.
+
+        - 漢（か）: compound reading with gloss.
+
 
         """
 
-        m = re.search(r'\p{Han}\p{Hiragana}*（\p{Hiragana}', string)
+
+        string = string.strip()
+
+        m = re.match(r'［\p{Han}］＝許容字体，', string)
+        if m:
+            self.notes = string
+            self.pending_note = True
+
+            # ignore this data; it's already availabe in
+            # self.acceptable_variant.
+            return
+
+        m = re.match(r'＊［(（付）.*)参照］$', string)
+        if m:
+            if self.pending_note:
+                self.notes += m[1]
+                self.pending_note = False
+            else:
+                self.notes = m[1]
+            self.joyo_documentation = m[1]
+            return
+
+
+        # no $
+        m = re.match(r'(お?)([\p{Han}・\p{Hiragana}]+)（(\p{Hiragana}+)）(.*)', string)
         if m:
             self.notes = string
             # cf. 茨城（いばらき）県
             parts = string.split('，')
             for part in parts:
+                # now with $
                 m = re.match(r'(お?)([\p{Han}・\p{Hiragana}]+)（(\p{Hiragana}+)）(.*)$', part)
-                assert(m)
                 prefix = m[1]
                 orthographies = (m[2]).split('・')
                 gloss = m[3]
@@ -180,24 +206,8 @@ class Kanji:
                                                   prefix + gloss + suffix)
                 return
 
-        m = re.match(r'［(\p{Han})］＝許容字体，', string)
-        if m:
-            self.notes = string
-            self.pending_note = True
 
-            # TODO: data structure
-            return
-
-        m = re.match(r'＊［(（付）.*)］', string)
-        if m:
-            if self.pending_note:
-                self.notes += m[1]
-                self.pending_note = False
-            else:
-                self.notes = m[1]
-            return
-
-        raise(ValueError("BUG: unknown note format: '%s'" % string))
+        self.readings[-1].append_to_notes(string)
 
     def add_placename_reading(self, orthography, gloss, kind):
         self.placename_readings[orthography] = gloss
@@ -643,8 +653,7 @@ class Reading:
         """Intelligently add data from the "notes" column.
 
         Notes field can have two kinds of scope: per-reading, or whole-kanji.
-        This function only handles reading-scoped notes; it calls
-        Kanji.__append_to_kanji_notes() if needed.
+        This function only handles reading-scoped notes.
 
         - ↔ (.+,?)+:  same-reading different-kanji
 
@@ -665,7 +674,12 @@ class Reading:
 
         """
 
-        string = string.strip()
+        m = re.search(r'\p{Han}\p{Hiragana}*（\p{Hiragana}', string)
+        if m:
+            # looks like a gloss note; is it? weed out false positives:
+            if not re.search(r'）」', string):
+                self.kanji.append_to_kanji_notes(string)
+                return
 
         m = re.match(r'⇔ *(.+)', string)
         if m:
@@ -674,19 +688,11 @@ class Reading:
             self.alternate_orthographies = m[1].split('，')
             return
 
-        m = re.search(r'\p{Han}\p{Hiragana}*（\p{Hiragana}', string)
-        if m:
-            # looks like a gloss note; is it? weed out false positives:
-            if not re.search(r'）」', string):
-                self.kanji.append_to_kanji_notes(string)
-                return
 
 
-        m = re.match(r'(「(.*)」，?)+(など)?は，', string)
+        m = re.match(r'(「.*」，?)+(など)?は，', string)
         if m:
             self.notes = string
-            # TODO:
-            # self.other = m[1]
             if not re.search('。$', string):
                 self.kanji.pending_note = True
             return
@@ -694,8 +700,6 @@ class Reading:
         m = re.match(r'(「(.*)」，?)+などと使う。$', string)
         if m:
             self.notes = string
-            # TODO:
-            # self.other = m[1]
             return
 
         if self.kanji.pending_note == True:
@@ -738,8 +742,7 @@ class Reading:
             self.notes = string
             return
 
-        # no match; let's try it as a kanji-scoped note
-        self.kanji.append_to_kanji_notes(string)
+        raise(RuntimeError("BUG: unknown note format:\n  '%s'" % string))
 
 
     # pretty representation; useful when debugging

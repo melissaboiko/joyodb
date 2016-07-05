@@ -623,6 +623,79 @@ def parse_appendix_table():
     loaded_data.joyotxt.close()
 
 def convert_to_tsv():
+    with open(outputdir + '/kanji_variants.tsv', 'wt') as f:
+        f.write(tsv_line('Kanji',
+                         'Codepoint',
+                         'Old',
+                         'Old codepoint',
+                         'Popular',
+                         'Popular codepoint',
+                         'Standard variation sequence',
+                         'Standard variation sequence codepoint',
+                         'Acceptable variation sequence',
+                         'Acceptable variation sequence codepoint',
+                         'Documentation'))
+
+        for k in loaded_data.kanjis:
+            if k.standard_character:
+                kanji = k.standard_character
+                kanji_cp = codepoint_str(kanji)
+                popular = k.kanji
+                popular_cp = codepoint_str(popular)
+            else:
+                kanji = k.kanji
+                kanji_cp = codepoint_str(kanji)
+                popular = popular_cp = ''
+
+            if k.old_kanji:
+                if type(k.old_kanji) ==  str:
+                    old = {k.old_kanji: codepoint_str(k.old_kanji)}
+                else:
+                    old={}
+                    for o in k.old_kanji:
+                        old[o] = codepoint_str(o)
+            else:
+                old = {}
+
+            if k.standard_variant:
+                sv = k.standard_variant
+                sv_cp = codepoint_str(sv)
+                av = k.accepted_variant
+                av_cp = codepoint_str(av)
+            else:
+                sv = sv_cp = av = av_cp = ''
+
+            doc = k.joyo_documentation or ''
+
+
+            if old:
+                for o, o_cp in old.items():
+                    f.write(tsv_line(kanji,
+                                     kanji_cp,
+                                     o,
+                                     o_cp,
+                                     popular,
+                                     popular_cp,
+                                     sv,
+                                     sv_cp,
+                                     av,
+                                     av_cp,
+                                     doc))
+            elif not ('' == popular == popular_cp == sv == sv_cp == av == av_cp
+                      == doc):
+                    f.write(tsv_line(kanji,
+                                     kanji_cp,
+                                     '',
+                                     '',
+                                     popular,
+                                     popular_cp,
+                                     sv,
+                                     sv_cp,
+                                     av,
+                                     av_cp,
+                                     doc))
+
+
     with open(outputdir + '/readings.tsv', 'wt') as f:
         f.write("Kanji\tReading\tRomaji\tType\tUncommon?\tVariation of\tAlternative orthographies\n")
         for k in loaded_data.kanjis:
@@ -722,6 +795,25 @@ def convert_to_tsv():
 
 def tsv_line(*fields):
     return("\t".join(fields) + "\n")
+
+def codepoint_str(string):
+    '''String representing codepoints of characters.
+
+    >>> codepoint_str('a')
+    '0061'
+
+    >>> codepoint_str('az')
+    '0061,007a'
+
+    >>> codepoint_str('𠮟')
+    '20b9f'
+
+    >>> codepoint_str('𠮟')
+    '20b9f'
+    '''
+
+    return(','.join(['%04x' % ord(ch)
+                     for ch in string]))
 
 def convert_to_sql():
     pass
