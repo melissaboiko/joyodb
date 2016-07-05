@@ -789,8 +789,6 @@ class Example:
             self.example = example
             self.pos = None
 
-        self.literary = literary
-
     def __str__(self):
         return self.example
 
