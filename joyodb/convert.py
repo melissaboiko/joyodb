@@ -702,7 +702,7 @@ def convert_to_tsv():
                         uncommon,
                         r.notes))
 
-    with open(outputdir + '/compounds_by_readings.tsv', 'wt') as f:
+    with open(outputdir + '/compounds_by_reading.tsv', 'wt') as f:
         f.write("Reading\tOrthography\n")
         for kana in sorted(loaded_data.compound_readings.keys()):
             for kanji in sorted(loaded_data.compound_readings[kana]):
@@ -710,8 +710,8 @@ def convert_to_tsv():
 
     with open(outputdir + '/compounds_by_kanji.tsv', 'wt') as f:
         f.write("Kanji\tCompound\tReading\n")
-        for k in loaded_data.kanjis:
-            for ort, gloss in k.compound_readings.items():
+        for k in sorted(loaded_data.kanjis, key=lambda k: k.kanji):
+            for ort, gloss in sorted(k.compound_readings.items()):
                 f.write(tsv_line(k.kanji, ort, gloss))
 
     with open(outputdir + '/placenames.tsv', 'wt') as f:
