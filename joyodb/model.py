@@ -687,6 +687,14 @@ class Reading:
 
         """
 
+        if string == '多く文語の「亡き」で使う。':
+            self.add_examples('亡き')
+            for e in self.examples:
+                if '亡き' in e.example:
+                    e.literary = True
+            self.notes = string
+            return
+
         m = re.match(r'⇔ *(.+)', string)
         if m:
             self.notes = string
@@ -739,10 +747,6 @@ class Reading:
             self.notes = string
             return
 
-        m = re.match(r'.*文語.*「(.*)」で使う。', string)
-        if m:
-            self.notes = string
-            return
         m = re.search(r'」になる。$', string)
         if m:
             self.notes = string
@@ -768,6 +772,8 @@ class Example:
          - self.example: The cleaned text string.
          - self.pos: If a part-of-speech marker is given, this is set to one of
           'Adverb', 'Conjunction' or 'Suffix'.
+         - self.literary: True if the example is marked as "literary" (文語) in
+         the PDF.
       """
 
         if '〔副〕' in example:
@@ -782,6 +788,8 @@ class Example:
         else:
             self.example = example
             self.pos = None
+
+        self.literary = literary
 
     def __str__(self):
         return self.example

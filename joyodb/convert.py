@@ -669,7 +669,7 @@ def convert_to_tsv():
 
 
             if old:
-                for o, o_cp in old.items():
+                for o, o_cp in sorted(old.items()):
                     f.write(tsv_line(kanji,
                                      kanji_cp,
                                      o,
