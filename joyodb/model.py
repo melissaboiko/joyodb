@@ -30,8 +30,8 @@ class Kanji:
           in prefectural names.
 
         - notes: Associated notes (参考), when they're kanji-scoped.  The
-          original Japanese text as a string.  Notes pertaining to specific
-          readings go into their Reading objects.
+          original Japanese text as a list of strings, one string per note.
+          Notes pertaining to specific readings go into their Reading objects.
 
         - standard_character: In four cases, the Unicode character favored by
           the Joyo standard is not normally used; rather, current practice
@@ -93,7 +93,7 @@ class Kanji:
         self.readings = list()
         self.placename_readings = dict()
         self.compound_readings = dict()
-        self.notes = ''
+        self.notes = list()
         self.joyo_documentation = None
 
         # if true, next note line should be appended to current note
@@ -166,7 +166,7 @@ class Kanji:
 
         m = re.match(r'［\p{Han}］＝許容字体，', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             self.pending_note = True
 
             # ignore this data; it's already availabe in
@@ -176,10 +176,10 @@ class Kanji:
         m = re.match(r'＊［(（付）.*)参照］$', string)
         if m:
             if self.pending_note:
-                self.notes += m[1]
+                self.notes[-1] += m[1]
                 self.pending_note = False
             else:
-                self.notes = m[1]
+                self.notes.append(m[1])
             self.joyo_documentation = m[1]
             return
 
@@ -187,7 +187,7 @@ class Kanji:
         # no $
         m = re.match(r'(お?)([\p{Han}・\p{Hiragana}]+)（(\p{Hiragana}+)）(.*)', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             # cf. 茨城（いばらき）県
             parts = string.split('，')
             for part in parts:
@@ -401,7 +401,8 @@ class Reading:
         - variation_of: If true, this isn't listed as a separate reading in the
                         Joyo table, but as a variant of another reading (which
                         is given as a string).
-        - notes: The "notes" (参考) column, when it's reading-scoped.
+        - notes: The "notes" (参考) column, when they're reading-scoped.  A
+          list of strings, one per note.
 
         The following information is parsed from the notes:
         - alternate_orthographies: List of different kanji spellings for the
@@ -428,8 +429,8 @@ class Reading:
                 self.kind = 'Kun'
 
         self.variation_of = variation_of
-        self.notes = ''
-        self.alternate_orthographies = []
+        self.notes = list()
+        self.alternate_orthographies = list()
 
     def add_examples(self, examples_str):
         """Add an example to the list.
@@ -680,15 +681,15 @@ class Reading:
             for e in self.examples:
                 if '亡き' in e.example:
                     e.literary = True
-            self.notes = string
+            self.notes.append(string)
             return
 
         if string == '「三位一体」，「従三位」は，「サン':
-            self.notes = string
+            self.notes.append(string)
             self.kanji.pending_note = True
             return
         elif string == 'ミイッタイ」，「ジュサンミ」。':
-            self.kanji.readings[-2].notes += string
+            self.kanji.readings[-2].notes[-1] += string
             self.kanji.pending_note = False
 
             self.kanji.add_reading("ミ")
@@ -697,11 +698,11 @@ class Reading:
             return
 
         if string == '「春雨」，「小雨」，「霧雨」などは，':
-            self.notes = string
+            self.notes.append(string)
             self.kanji.pending_note = True
             return
         elif string == '「はるさめ」，「こさめ」，「きりさめ」。':
-            self.notes += string
+            self.notes[-1] += string
             self.kanji.pending_note = False
 
             self.kanji.add_reading("さめ")
@@ -716,7 +717,7 @@ class Reading:
 
         m = re.match(r'⇔ *(.+)', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             assert(re.match('[\p{Han}\p{Hiragana}，]+', m[1]))
             self.alternate_orthographies = m[1].split('，')
             return
@@ -725,14 +726,14 @@ class Reading:
 
         m = re.match(r'(「.*」，?)+(など)?は，', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             if not re.search('。$', string):
                 self.kanji.pending_note = True
             return
 
         m = re.match(r'(「(.*)」，?)+などと使う。$', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             return
 
         if self.kanji.pending_note == True:
@@ -741,10 +742,10 @@ class Reading:
 
                 # previous half of note could have been in this reading...
                 if self.notes:
-                    self.notes += string
+                    self.notes[-1] += string
                 # or the previous one.
                 elif self.kanji.readings[-2].notes:
-                    self.kanji.readings[-2].notes += string
+                    self.kanji.readings[-2].notes[-1] += string
                 else:
                     raise(ValueError("BUG: can't find where to attach half-note."))
 
@@ -753,22 +754,22 @@ class Reading:
 
         m = re.match(r'(「[\p{Han}\p{Hiragana}\p{Katakana}]+」,?)+とも(書く)?。', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             return
 
         m = re.match(r'「(\p{Han})」.*転用。', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             return
 
         m = re.match(r'「(.*)」.*の意。', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             return
 
         m = re.search(r'」になる。$', string)
         if m:
-            self.notes = string
+            self.notes.append(string)
             return
 
         raise(RuntimeError("BUG: unknown note format:\n  '%s'" % string))
